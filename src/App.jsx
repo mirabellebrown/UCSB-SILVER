@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   chatbotSeedMessages,
   dashboardMetrics,
@@ -17,6 +17,12 @@ import {
 } from './mockData'
 
 const quarters = ['Fall', 'Winter', 'Spring']
+const storageKeys = {
+  planner: 'prereqly-planner',
+  transferCredits: 'prereqly-transfer-credits',
+  manualRequirementCompletions: 'prereqly-manual-requirements',
+}
+
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
@@ -97,21 +103,67 @@ function getMonthMatrix(year, monthIndex) {
   return cells
 }
 
+function readStoredValue(key) {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  try {
+    const storedValue = window.localStorage.getItem(key)
+    return storedValue ? JSON.parse(storedValue) : null
+  } catch {
+    return null
+  }
+}
+
+function writeStoredValue(key, value) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(key, JSON.stringify(value))
+}
+
+function plannerMatchesRequirement(item, plannedCourseCodes) {
+  if (!item.courseCodes?.length) {
+    return false
+  }
+
+  return item.courseCodes.some((courseCode) => plannedCourseCodes.has(courseCode))
+}
+
 function App() {
   const [activeView, setActiveView] = useState('dashboard')
-  const [planner, setPlanner] = useState(createPlannerState)
+  const [planner, setPlanner] = useState(() => {
+    const storedPlanner = readStoredValue(storageKeys.planner)
+    return Array.isArray(storedPlanner) ? storedPlanner : createPlannerState()
+  })
   const [selectedQuarterKey, setSelectedQuarterKey] = useState('Year 2|Spring')
-  const [transferCredits, setTransferCredits] = useState(false)
-  const [requirementChecks, setRequirementChecks] = useState(() =>
-    Object.fromEntries(
-      requirementSections
-        .flatMap((section) => section.items)
-        .map((item) => [item.id, item.completed]),
-    ),
-  )
+  const [transferCredits, setTransferCredits] = useState(() => {
+    const storedTransferCredits = readStoredValue(storageKeys.transferCredits)
+    return typeof storedTransferCredits === 'boolean' ? storedTransferCredits : false
+  })
+  const [manualRequirementCompletions, setManualRequirementCompletions] = useState(() => {
+    const storedManualRequirementCompletions = readStoredValue(
+      storageKeys.manualRequirementCompletions,
+    )
+
+    return storedManualRequirementCompletions &&
+      typeof storedManualRequirementCompletions === 'object' &&
+      !Array.isArray(storedManualRequirementCompletions)
+      ? storedManualRequirementCompletions
+      : {}
+  })
   const [chatMessages, setChatMessages] = useState(chatbotSeedMessages)
   const [draftMessage, setDraftMessage] = useState('')
   const [openFaq, setOpenFaq] = useState(financialAid.faqs[0].id)
+  const hasLoadedSavedState = true
+
+  useEffect(() => {
+    writeStoredValue(storageKeys.planner, planner)
+    writeStoredValue(storageKeys.transferCredits, transferCredits)
+    writeStoredValue(storageKeys.manualRequirementCompletions, manualRequirementCompletions)
+  }, [planner, transferCredits, manualRequirementCompletions])
 
   const plannedCourseCodes = useMemo(
     () =>
@@ -129,27 +181,66 @@ function App() {
     () =>
       requirementSections.map((section) => {
         const items = section.items.map((item) => {
-          const isSatisfied = requirementChecks[item.id] || (transferCredits && item.transferEligible)
-          const autoFilled = transferCredits && item.transferEligible && !requirementChecks[item.id]
-          return { ...item, autoFilled, isSatisfied }
+          const matchesPlanner = plannerMatchesRequirement(item, plannedCourseCodes)
+          const isManualCompletion = Boolean(manualRequirementCompletions[item.id])
+          const isTransferCompletion = transferCredits && item.transferEligible && !item.completed
+
+          let status = 'pending'
+          let source = 'pending'
+
+          if (item.completed) {
+            status = 'completed'
+            source = 'record'
+          } else if (isManualCompletion) {
+            status = 'completed'
+            source = 'manual'
+          } else if (isTransferCompletion) {
+            status = 'completed'
+            source = 'transfer'
+          } else if (matchesPlanner) {
+            status = 'planned'
+            source = 'planner'
+          }
+
+          return {
+            ...item,
+            autoFilled: source === 'transfer',
+            isInteractive: source !== 'record' && source !== 'transfer',
+            isPlanned: status === 'planned',
+            isSatisfied: status === 'completed',
+            actionLabel:
+              source === 'manual'
+                ? 'Clear manual mark'
+                : source === 'record'
+                  ? 'Already completed'
+                  : source === 'transfer'
+                    ? 'Covered by transfer credit'
+                    : 'Mark completed',
+            source,
+            status,
+          }
         })
 
         return {
           ...section,
           items,
           completedCount: items.filter((item) => item.isSatisfied).length,
+          plannedCount: items.filter((item) => item.isPlanned).length,
         }
       }),
-    [requirementChecks, transferCredits],
+    [manualRequirementCompletions, plannedCourseCodes, transferCredits],
   )
 
   const allRequirementItems = checklistSections.flatMap((section) => section.items)
+  const completedRequirementCount = allRequirementItems.filter((item) => item.isSatisfied).length
+  const plannedRequirementCount = allRequirementItems.filter((item) => item.isPlanned).length
   const checklistPercent = Math.round(
-    (allRequirementItems.filter((item) => item.isSatisfied).length / allRequirementItems.length) * 100,
+    (completedRequirementCount / allRequirementItems.length) * 100,
   )
-  const transferAutoFilled = allRequirementItems.filter(
-    (item) => transferCredits && item.transferEligible && !requirementChecks[item.id],
-  ).length
+  const plannedCoveragePercent = Math.round(
+    ((completedRequirementCount + plannedRequirementCount) / allRequirementItems.length) * 100,
+  )
+  const transferAutoFilled = allRequirementItems.filter((item) => item.source === 'transfer').length
 
   function handleAddSuggestedCourse(course) {
     if (plannedCourseCodes.has(course.code)) {
@@ -174,11 +265,22 @@ function App() {
     )
   }
 
-  function handleToggleRequirement(itemId) {
-    setRequirementChecks((current) => ({
-      ...current,
-      [itemId]: !current[itemId],
-    }))
+  function handleToggleRequirement(item) {
+    if (!item.isInteractive) {
+      return
+    }
+
+    setManualRequirementCompletions((current) => {
+      const next = { ...current }
+
+      if (current[item.id]) {
+        delete next[item.id]
+      } else {
+        next[item.id] = true
+      }
+
+      return next
+    })
   }
 
   function handleSendMessage() {
@@ -222,9 +324,13 @@ function App() {
     checklist: (
       <ChecklistView
         checklistPercent={checklistPercent}
+        completedRequirementCount={completedRequirementCount}
+        plannedCoveragePercent={plannedCoveragePercent}
+        plannedRequirementCount={plannedRequirementCount}
         sections={checklistSections}
         transferAutoFilled={transferAutoFilled}
         transferCredits={transferCredits}
+        hasLoadedSavedState={hasLoadedSavedState}
         onToggleTransferCredits={() => setTransferCredits((current) => !current)}
         onToggleRequirement={handleToggleRequirement}
       />
@@ -652,9 +758,13 @@ function PlannerView({
 
 function ChecklistView({
   checklistPercent,
+  completedRequirementCount,
+  plannedCoveragePercent,
+  plannedRequirementCount,
   sections,
   transferAutoFilled,
   transferCredits,
+  hasLoadedSavedState,
   onToggleTransferCredits,
   onToggleRequirement,
 }) {
@@ -665,15 +775,28 @@ function ChecklistView({
           <p className="text-sm uppercase tracking-[0.24em] text-[#FEBC11]">Degree Checklist</p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight">Requirement progress</h2>
           <p className="mt-3 text-sm leading-6 text-slate-400">
-            Toggle transfer credit to simulate incoming AP or community college work, then mark
-            items complete as you plan.
+            Toggle transfer credit, review what is already mapped in the planner, and manually mark
+            requirements completed when they happen outside the current roadmap.
           </p>
 
           <div className="mt-6 flex flex-col items-center gap-4 rounded-[28px] border border-white/10 bg-slate-950/45 p-6 text-center">
             <ProgressRing percent={checklistPercent} />
             <div>
               <div className="text-lg font-semibold">{checklistPercent}% complete</div>
-              <div className="mt-1 text-sm text-slate-400">Across GE, core major courses, and electives</div>
+              <div className="mt-1 text-sm text-slate-400">
+                Completed requirements based on your record, transfer credit, and manual confirmations
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Completed now</div>
+              <div className="mt-2 text-2xl font-semibold">{completedRequirementCount}</div>
+            </div>
+            <div className="rounded-2xl border border-sky-400/20 bg-sky-400/10 p-4">
+              <div className="text-xs uppercase tracking-[0.18em] text-sky-200">Covered if planned</div>
+              <div className="mt-2 text-2xl font-semibold text-white">{plannedCoveragePercent}%</div>
             </div>
           </div>
 
@@ -710,6 +833,16 @@ function ChecklistView({
               {transferAutoFilled} eligible requirements were auto-filled by the transfer credit toggle.
             </div>
           )}
+
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
+            {plannedRequirementCount} additional requirements are already accounted for in the 4-year
+            planner.
+            {hasLoadedSavedState && (
+              <span className="mt-2 block text-slate-400">
+                Checklist and planner changes are saved automatically in this browser.
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-4">
@@ -724,27 +857,30 @@ function ChecklistView({
                   <p className="mt-1 text-sm leading-6 text-slate-400">{section.description}</p>
                 </div>
                 <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-slate-300">
-                  {section.completedCount} / {section.items.length} complete
+                  {section.completedCount} complete
+                  {section.plannedCount > 0 && ` • ${section.plannedCount} planned`}
                 </div>
               </div>
 
               <div className="mt-4 grid gap-3">
                 {section.items.map((item) => (
-                  <button
+                  <div
                     key={item.id}
-                    type="button"
-                    onClick={() => onToggleRequirement(item.id)}
                     className={`flex items-start gap-4 rounded-2xl border p-4 text-left transition ${
-                      item.isSatisfied
+                      item.status === 'completed'
                         ? 'border-emerald-400/25 bg-emerald-400/10'
-                        : 'border-white/10 bg-slate-950/45 hover:border-white/20'
+                        : item.status === 'planned'
+                          ? 'border-sky-400/25 bg-sky-400/10'
+                          : 'border-white/10 bg-slate-950/45'
                     }`}
                   >
                     <span
                       className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
-                        item.isSatisfied
+                        item.status === 'completed'
                           ? 'border-emerald-300 bg-emerald-400/90 text-slate-950'
-                          : 'border-slate-500 text-transparent'
+                          : item.status === 'planned'
+                            ? 'border-sky-300 bg-sky-400/90 text-slate-950'
+                            : 'border-slate-500 text-transparent'
                       }`}
                     >
                       <AppIcon name="check" className="h-4 w-4" />
@@ -757,10 +893,46 @@ function ChecklistView({
                             Transfer
                           </span>
                         )}
+                        {item.source === 'planner' && (
+                          <span className="rounded-full bg-sky-400/20 px-2 py-1 text-[11px] font-semibold text-sky-100">
+                            Planned
+                          </span>
+                        )}
+                        {item.source === 'manual' && (
+                          <span className="rounded-full bg-emerald-400/20 px-2 py-1 text-[11px] font-semibold text-emerald-100">
+                            Manual
+                          </span>
+                        )}
+                        {item.source === 'record' && (
+                          <span className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-semibold text-slate-200">
+                            On record
+                          </span>
+                        )}
                       </span>
                       <span className="mt-1 block text-sm leading-6 text-slate-400">{item.detail}</span>
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <span className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                          {item.status === 'completed'
+                            ? 'Completed'
+                            : item.status === 'planned'
+                              ? 'Planned in roadmap'
+                              : 'Pending'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onToggleRequirement(item)}
+                          disabled={!item.isInteractive}
+                          className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                            item.isInteractive
+                              ? 'border border-white/10 bg-white/5 text-slate-100 hover:border-white/20 hover:bg-white/8'
+                              : 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500'
+                          }`}
+                        >
+                          {item.actionLabel}
+                        </button>
+                      </div>
                     </span>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
