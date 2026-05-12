@@ -881,8 +881,8 @@ function getGradeBarClass(grade) {
   return 'bg-black'
 }
 
-function LetterGradeDistributionChart({ gradeBreakdown, totalStudents }) {
-  const maxCount = Math.max(...gradeBreakdown.map((entry) => entry.count), 1)
+function OfferingDistributionChart({ offering }) {
+  const maxCount = Math.max(...offering.gradeBreakdown.map((entry) => entry.count), 1)
   const tickCount = 5
   const ticks = Array.from({ length: tickCount }, (_, index) =>
     Math.round((maxCount * (tickCount - index)) / tickCount),
@@ -892,12 +892,12 @@ function LetterGradeDistributionChart({ gradeBreakdown, totalStudents }) {
     <div className="mt-5 rounded-[28px] border border-white/10 bg-[#f5f5f4] p-4 text-slate-900">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-sm font-semibold text-slate-700">Letter grade distribution</div>
+          <div className="text-sm font-semibold text-slate-700">{offering.instructor}</div>
           <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
-            Count and share by final letter grade
+            {offering.term}
           </div>
         </div>
-        <div className="text-sm font-semibold text-slate-600">Total: {totalStudents}</div>
+        <div className="text-sm font-semibold text-slate-600">Total: {offering.letterStudentCount}</div>
       </div>
 
       <div className="mt-5 grid grid-cols-[36px_1fr] gap-3">
@@ -917,7 +917,7 @@ function LetterGradeDistributionChart({ gradeBreakdown, totalStudents }) {
           </div>
 
           <div className="relative grid h-52 grid-cols-[repeat(auto-fit,minmax(20px,1fr))] items-end gap-3 px-2">
-            {gradeBreakdown.map((entry) => (
+            {offering.gradeBreakdown.map((entry) => (
               <div key={entry.grade} className="flex flex-col items-center justify-end">
                 <div className="mb-2 text-center text-[11px] leading-4 text-slate-600">
                   <div className="font-semibold text-slate-800">{entry.count}</div>
@@ -935,6 +935,16 @@ function LetterGradeDistributionChart({ gradeBreakdown, totalStudents }) {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function OfferingDistributionCharts({ offeringDistributions }) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      {offeringDistributions.map((offering) => (
+        <OfferingDistributionChart key={offering.id} offering={offering} />
+      ))}
     </div>
   )
 }
@@ -958,56 +968,6 @@ function HistoricalInstructorsList({ instructors }) {
   )
 }
 
-function OfferingHistoryList({ offeringHistory }) {
-  return (
-    <div className="mt-4 space-y-3">
-      {offeringHistory.map((offering) => (
-        <div
-          key={offering.term}
-          className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="font-semibold text-white">{offering.term}</div>
-            <div className="text-slate-400">
-              {offering.offeringCount} {offering.offeringCount === 1 ? 'section' : 'sections'}
-            </div>
-          </div>
-          {offering.instructors.length > 0 ? (
-            <div className="mt-3 space-y-2">
-              {offering.instructors.map((instructor) => (
-                <div
-                  key={`${offering.term}-${instructor.name}`}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/8 bg-slate-950/45 px-3 py-2"
-                >
-                  <div className="font-medium text-slate-100">{instructor.name}</div>
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 font-semibold text-emerald-100">
-                      {instructor.aRangeRate != null ? `${instructor.aRangeRate}% A range` : 'A range N/A'}
-                    </span>
-                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 font-semibold text-slate-200">
-                      {instructor.letterStudents} letter grades
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-2 leading-6 text-slate-300">Instructor data unavailable</div>
-          )}
-          <div className="mt-3 flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1.5 font-semibold text-sky-100">
-              {offering.totalStudents} students
-            </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 font-semibold text-slate-200">
-              {offering.instructors.length} {offering.instructors.length === 1 ? 'instructor' : 'instructors'}
-            </span>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function CourseGradesDetailModal({ course, onClose }) {
   const [expandedCourseCode, setExpandedCourseCode] = useState('')
 
@@ -1017,14 +977,22 @@ function CourseGradesDetailModal({ course, onClose }) {
 
   const { summary } = course
   const showAllHistory = expandedCourseCode === course.code
-  const visibleOfferingHistory = showAllHistory
-    ? summary.offeringHistory
-    : summary.offeringHistory.slice(0, 3)
+  const visibleOfferingDistributions = showAllHistory
+    ? summary.offeringDistributions
+    : summary.offeringDistributions.filter((offering) => offering.year >= summary.latestYear - 2)
+  const hasOlderOfferingData = summary.offeringDistributions.some(
+    (offering) => offering.year < summary.latestYear - 2,
+  )
+
+  function handleClose() {
+    setExpandedCourseCode('')
+    onClose()
+  }
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 py-6 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[32px] border border-white/10 bg-[#07192f] p-6 shadow-[0_30px_120px_rgba(2,8,23,0.7)]"
@@ -1039,7 +1007,7 @@ function CourseGradesDetailModal({ course, onClose }) {
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold text-slate-200 transition hover:border-white/20"
           >
             Close
@@ -1065,19 +1033,28 @@ function CourseGradesDetailModal({ course, onClose }) {
             <div className="mt-6 rounded-[28px] border border-white/10 bg-slate-950/45 p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-white">Grade distribution</div>
+                  <div className="text-sm font-semibold text-white">Recent grade distributions</div>
                   <div className="mt-1 text-sm text-slate-400">
-                    Historical percentages across {summary.offeringCount} offerings and{' '}
-                    {summary.letterStudentCount} letter-graded students.
+                    Showing the last three years first so each chart stays tied to the instructor who
+                    taught that offering.
                   </div>
                 </div>
                 <AppIcon name="spark" className="h-5 w-5 text-[#FEBC11]" />
               </div>
 
-              <LetterGradeDistributionChart
-                gradeBreakdown={summary.gradeBreakdown}
-                totalStudents={summary.letterStudentCount}
-              />
+              <OfferingDistributionCharts offeringDistributions={visibleOfferingDistributions} />
+
+              {hasOlderOfferingData && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedCourseCode((current) => (current === course.code ? '' : course.code))
+                  }
+                  className="mt-4 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/8"
+                >
+                  {showAllHistory ? 'Show only last three years' : 'View all data'}
+                </button>
+              )}
             </div>
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -1094,32 +1071,6 @@ function CourseGradesDetailModal({ course, onClose }) {
               </div>
             </div>
 
-            <div className="mt-6 rounded-[28px] border border-white/10 bg-slate-950/45 p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-sm font-semibold text-white">Historical offerings</div>
-                  <div className="mt-1 text-sm text-slate-400">
-                    See the most recent three quarters when this course appeared and which instructors
-                    taught it.
-                  </div>
-                </div>
-                <AppIcon name="calendar" className="h-5 w-5 text-[#FEBC11]" />
-              </div>
-
-              <OfferingHistoryList offeringHistory={visibleOfferingHistory} />
-
-              {summary.offeringHistory.length > 3 && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setExpandedCourseCode((current) => (current === course.code ? '' : course.code))
-                  }
-                  className="mt-4 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/8"
-                >
-                  {showAllHistory ? 'Show fewer quarters' : 'See all data'}
-                </button>
-              )}
-            </div>
           </>
         )}
       </div>

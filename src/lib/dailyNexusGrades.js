@@ -147,6 +147,36 @@ function buildOfferingHistory(offerings) {
     }))
 }
 
+function buildOfferingDistributions(offerings) {
+  return [...offerings]
+    .sort(
+      (left, right) =>
+        compareTerms(right, left) ||
+        (left.instructor || 'Instructor unavailable').localeCompare(
+          right.instructor || 'Instructor unavailable',
+        ),
+    )
+    .map((offering, index) => ({
+      gradeBreakdown: LETTER_GRADE_COLUMNS.map(({ column, label }) => {
+        const count = offering.letterGradeCounts[column]
+        return {
+          count,
+          grade: label,
+          rate:
+            offering.nLetterStudents > 0
+              ? toRoundedNumber((count / offering.nLetterStudents) * 100, 1)
+              : null,
+        }
+      }),
+      id: `${offering.year}-${offering.quarter}-${offering.instructor || 'unknown'}-${index}`,
+      instructor: offering.instructor || 'Instructor unavailable',
+      letterStudentCount: offering.nLetterStudents,
+      term: buildTermLabel(offering.quarter, offering.year),
+      totalStudents: offering.totalStudents,
+      year: offering.year,
+    }))
+}
+
 function aggregateLatestOfferings(offerings, latestTerm) {
   const latestOfferings = offerings.filter(
     (offering) => offering.year === latestTerm.year && offering.quarter === latestTerm.quarter,
@@ -214,6 +244,7 @@ function summarizeCourseOfferings(course, offerings) {
 
   const latestSummary = aggregateLatestOfferings(offerings, latestTerm)
   const historicalInstructors = buildHistoricalInstructorList(offerings)
+  const offeringDistributions = buildOfferingDistributions(offerings)
   const offeringHistory = buildOfferingHistory(offerings)
   const letterStudentsForRates =
     totals.aRangeStudents + totals.bRangeStudents + totals.cOrBelowStudents
@@ -260,7 +291,9 @@ function summarizeCourseOfferings(course, offerings) {
     latestInstructors: latestSummary.instructors,
     latestInstructorCount: latestSummary.instructorCount,
     latestTerm: buildTermLabel(latestTerm.quarter, latestTerm.year),
+    latestYear: latestTerm.year,
     offeringCount: totals.totalOfferings,
+    offeringDistributions,
     offeringHistory,
     gradeBreakdown,
     letterStudentCount: letterStudentsForRates,
