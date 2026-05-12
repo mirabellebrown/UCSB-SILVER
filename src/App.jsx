@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import {
+  advisorSuggestedCourses,
   chatbotSeedMessages,
   dashboardMetrics,
   financialAid,
@@ -1005,6 +1006,9 @@ function ChecklistView({
 }
 
 function ChatView({ draftMessage, messages, onDraftChange, onSendMessage }) {
+  const { error: gradesError, isLoading: isLoadingGrades, summaries: gradeSummaries } =
+    useCourseGradeSummaries(advisorSuggestedCourses.map((course) => course.code))
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1.4fr,0.8fr]">
       <section className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl">
@@ -1100,12 +1104,29 @@ function ChatView({ draftMessage, messages, onDraftChange, onSendMessage }) {
           <p className="text-sm uppercase tracking-[0.24em] text-[#FEBC11]">Advisor summary</p>
           <h3 className="mt-2 text-2xl font-semibold tracking-tight">Suggested next quarter</h3>
           <div className="mt-4 space-y-3">
-            {['CMPSC 130B', 'CMPSC 170', 'GE Area D or TMP 120'].map((item) => (
-              <div key={item} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">
-                {item}
+            {advisorSuggestedCourses.map((course) => (
+              <div key={course.code} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{course.code}</span>
+                  <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${plannerLegend[course.type].pillClass}`}>
+                    {plannerLegend[course.type].label}
+                  </span>
+                </div>
+                <div className="mt-2 text-sm text-slate-100">{course.title}</div>
+                <div className="mt-2 text-sm leading-6 text-slate-300">{course.note}</div>
+                <CourseGradesSummary
+                  isLoading={isLoadingGrades}
+                  summary={gradeSummaries[course.code] ?? null}
+                />
               </div>
             ))}
           </div>
+
+          {gradesError && (
+            <div className="mt-4 rounded-2xl border border-rose-400/25 bg-rose-500/10 p-4 text-sm text-rose-100">
+              Advisor grade summaries are temporarily unavailable, but the recommendations still work.
+            </div>
+          )}
         </div>
 
         <div className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl">

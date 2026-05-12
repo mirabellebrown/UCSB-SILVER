@@ -209,6 +209,27 @@ export const plannerSuggestions = [
   },
 ]
 
+export const advisorSuggestedCourses = [
+  {
+    code: 'CMPSC 130B',
+    title: 'Data Structures and Algorithms II',
+    type: 'major',
+    note: 'Highest-priority next course if CMPSC 130A is complete.',
+  },
+  {
+    code: 'CMPSC 170',
+    title: 'Computer Architecture',
+    type: 'major',
+    note: 'Strong companion course if you want to keep the core sequence moving.',
+  },
+  {
+    code: 'TMP 120',
+    title: 'Innovation and Entrepreneurship',
+    type: 'elective',
+    note: 'Balanced elective option if you want a lighter third course with product focus.',
+  },
+]
+
 export const requirementSections = [
   {
     id: 'ge',
