@@ -3,6 +3,8 @@ import 'server-only'
 import { unstable_cache } from 'next/cache'
 import { parse } from 'csv-parse/sync'
 
+import { getProfessorReviewsByInstructorNames } from './rateMyProfessors'
+
 const DAILY_NEXUS_GRADES_URL =
   'https://raw.githubusercontent.com/dailynexusdata/grades-data/main/courseGrades.csv'
 const CACHE_REVALIDATE_SECONDS = 60 * 60 * 24
@@ -377,13 +379,23 @@ async function buildGradesIndex() {
   )
 }
 
+function collectSummaryInstructorNames(summary) {
+  return [
+    ...new Set([
+      ...summary.historicalInstructors,
+      ...summary.latestInstructors,
+      ...summary.offeringDistributions.map((offering) => offering.instructor),
+    ]),
+  ].filter(Boolean)
+}
+
 const getCachedGradesIndex = unstable_cache(buildGradesIndex, ['daily-nexus-grades-index'], {
   revalidate: CACHE_REVALIDATE_SECONDS,
 })
 
 export async function getCourseGradeSummaries(courseCodes) {
   const index = await getCachedGradesIndex()
-  const summaries = {}
+  const baseSummaries = {}
 
   for (const courseCode of courseCodes) {
     const normalizedCourseCode = normalizeCourseCode(courseCode)
@@ -391,7 +403,38 @@ export async function getCourseGradeSummaries(courseCodes) {
       continue
     }
 
-    summaries[normalizedCourseCode] = index[normalizedCourseCode] ?? null
+    baseSummaries[normalizedCourseCode] = index[normalizedCourseCode] ?? null
+  }
+
+  const requestedInstructorNames = [
+    ...new Set(
+      Object.values(baseSummaries)
+        .filter(Boolean)
+        .flatMap((summary) => collectSummaryInstructorNames(summary)),
+    ),
+  ]
+  const { professorReviewsByName, snapshotMeta } =
+    await getProfessorReviewsByInstructorNames(requestedInstructorNames)
+
+  const summaries = {}
+  for (const [courseCode, summary] of Object.entries(baseSummaries)) {
+    if (!summary) {
+      summaries[courseCode] = null
+      continue
+    }
+
+    const matchedProfessorReviews = Object.fromEntries(
+      collectSummaryInstructorNames(summary).map((instructorName) => [
+        instructorName,
+        professorReviewsByName[instructorName] ?? null,
+      ]),
+    )
+
+    summaries[courseCode] = {
+      ...summary,
+      professorReviewsByName: matchedProfessorReviews,
+      snapshotMeta,
+    }
   }
 
   return summaries
