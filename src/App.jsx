@@ -878,6 +878,30 @@ function GradeDistributionBar({ label, value, toneClass }) {
   )
 }
 
+function LetterGradeBreakdownTable({ gradeBreakdown }) {
+  return (
+    <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      <div className="grid grid-cols-[0.8fr_1fr_1fr] gap-3 border-b border-white/10 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+        <span>Grade</span>
+        <span>Students</span>
+        <span>Percent</span>
+      </div>
+      <div className="divide-y divide-white/10">
+        {gradeBreakdown.map((entry) => (
+          <div
+            key={entry.grade}
+            className="grid grid-cols-[0.8fr_1fr_1fr] gap-3 px-4 py-3 text-sm text-slate-200"
+          >
+            <span className="font-semibold text-white">{entry.grade}</span>
+            <span>{entry.count}</span>
+            <span>{entry.rate != null ? `${entry.rate}%` : 'N/A'}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function CourseGradesDetailModal({ course, onClose }) {
   if (!course) {
     return null
@@ -936,10 +960,16 @@ function CourseGradesDetailModal({ course, onClose }) {
                   <div className="text-sm font-semibold text-white">Grade distribution</div>
                   <div className="mt-1 text-sm text-slate-400">
                     Historical percentages across {summary.offeringCount} offerings and{' '}
-                    {summary.totalStudents} enrolled students.
+                    {summary.letterStudentCount} letter-graded students.
                   </div>
                 </div>
                 <AppIcon name="spark" className="h-5 w-5 text-[#FEBC11]" />
+              </div>
+
+              <LetterGradeBreakdownTable gradeBreakdown={summary.gradeBreakdown} />
+
+              <div className="mt-6 border-t border-white/10 pt-5">
+                <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Range overview</div>
               </div>
 
               <div className="mt-5 space-y-4">

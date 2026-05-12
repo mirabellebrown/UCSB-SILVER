@@ -12,6 +12,21 @@ const QUARTER_ORDER = {
   Summer: 3,
   Fall: 4,
 }
+const LETTER_GRADE_COLUMNS = [
+  { column: 'Ap', label: 'A+' },
+  { column: 'A', label: 'A' },
+  { column: 'Am', label: 'A-' },
+  { column: 'Bp', label: 'B+' },
+  { column: 'B', label: 'B' },
+  { column: 'Bm', label: 'B-' },
+  { column: 'Cp', label: 'C+' },
+  { column: 'C', label: 'C' },
+  { column: 'Cm', label: 'C-' },
+  { column: 'Dp', label: 'D+' },
+  { column: 'D', label: 'D' },
+  { column: 'Dm', label: 'D-' },
+  { column: 'F', label: 'F' },
+]
 
 function normalizeCourseCode(courseCode) {
   return courseCode?.trim().replace(/\s+/g, ' ').toUpperCase() ?? ''
@@ -24,6 +39,10 @@ function readNumber(value) {
 
 function toRoundedNumber(value, digits = 2) {
   return Number(value.toFixed(digits))
+}
+
+function createEmptyLetterGradeCounts() {
+  return Object.fromEntries(LETTER_GRADE_COLUMNS.map(({ column }) => [column, 0]))
 }
 
 function compareTerms(left, right) {
@@ -88,12 +107,16 @@ function summarizeCourseOfferings(course, offerings) {
       summary.aRangeStudents += offering.aRangeStudents
       summary.bRangeStudents += offering.bRangeStudents
       summary.cOrBelowStudents += offering.cOrBelowStudents
+      for (const { column } of LETTER_GRADE_COLUMNS) {
+        summary.letterGradeCounts[column] += offering.letterGradeCounts[column]
+      }
       return summary
     },
     {
       aRangeStudents: 0,
       bRangeStudents: 0,
       cOrBelowStudents: 0,
+      letterGradeCounts: createEmptyLetterGradeCounts(),
       totalGpaPoints: 0,
       totalLetterStudents: 0,
       totalOfferings: 0,
@@ -130,6 +153,14 @@ function summarizeCourseOfferings(course, offerings) {
     .filter(([, count]) => count === highestQuarterCount || count >= Math.max(2, Math.ceil(totals.totalOfferings / 3)))
     .map(([quarter]) => quarter)
     .sort((left, right) => (QUARTER_ORDER[left] ?? 0) - (QUARTER_ORDER[right] ?? 0))
+  const gradeBreakdown = LETTER_GRADE_COLUMNS.map(({ column, label }) => {
+    const count = totals.letterGradeCounts[column]
+    return {
+      count,
+      grade: label,
+      rate: letterStudentsForRates > 0 ? toRoundedNumber((count / letterStudentsForRates) * 100, 1) : null,
+    }
+  })
 
   return {
     aRangeRate:
@@ -154,6 +185,8 @@ function summarizeCourseOfferings(course, offerings) {
     latestInstructorCount: latestSummary.instructorCount,
     latestTerm: buildTermLabel(latestTerm.quarter, latestTerm.year),
     offeringCount: totals.totalOfferings,
+    gradeBreakdown,
+    letterStudentCount: letterStudentsForRates,
     totalStudents: totals.totalStudents,
     usualOffered: usualQuarters,
     usualOfferedLabel: buildQuarterListLabel(usualQuarters),
@@ -161,16 +194,19 @@ function summarizeCourseOfferings(course, offerings) {
 }
 
 function normalizeOffering(row) {
-  const aRangeStudents = readNumber(row.A) + readNumber(row.Ap) + readNumber(row.Am)
-  const bRangeStudents = readNumber(row.B) + readNumber(row.Bp) + readNumber(row.Bm)
+  const letterGradeCounts = Object.fromEntries(
+    LETTER_GRADE_COLUMNS.map(({ column }) => [column, readNumber(row[column])]),
+  )
+  const aRangeStudents = letterGradeCounts.A + letterGradeCounts.Ap + letterGradeCounts.Am
+  const bRangeStudents = letterGradeCounts.B + letterGradeCounts.Bp + letterGradeCounts.Bm
   const cOrBelowStudents =
-    readNumber(row.C) +
-    readNumber(row.Cp) +
-    readNumber(row.Cm) +
-    readNumber(row.D) +
-    readNumber(row.Dp) +
-    readNumber(row.Dm) +
-    readNumber(row.F)
+    letterGradeCounts.C +
+    letterGradeCounts.Cp +
+    letterGradeCounts.Cm +
+    letterGradeCounts.D +
+    letterGradeCounts.Dp +
+    letterGradeCounts.Dm +
+    letterGradeCounts.F
 
   return {
     aRangeStudents,
@@ -179,6 +215,7 @@ function normalizeOffering(row) {
     cOrBelowStudents,
     course: normalizeCourseCode(row.course),
     instructor: row.instructor?.trim() ?? '',
+    letterGradeCounts,
     nLetterStudents: readNumber(row.nLetterStudents),
     quarter: row.quarter?.trim() ?? '',
     totalStudents:
