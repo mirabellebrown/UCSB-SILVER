@@ -1,6 +1,6 @@
 # Prereqly
 
-Prereqly is a Next.js prototype for a UC Santa Barbara academic planning app. It is designed as a clickable student experience for exploring course planning, degree progress, deadlines, and financial aid in one place.
+Prereqly is a Next.js prototype for a UC Santa Barbara academic planning app. It is designed as a clickable student experience for exploring course planning, degree progress, and deadlines in one place.
 
 ## Live demo
 
@@ -11,11 +11,10 @@ Prereqly is a Next.js prototype for a UC Santa Barbara academic planning app. It
 The current prototype includes:
 
 - a dashboard with a student profile, graduation progress, quick access cards, and upcoming academic deadlines
-- a 4-year planner with a pre-filled Computer Science course path and click-to-add course recommendations
+- a 4-year planner with a pre-filled Letters & Science sample Economics pathway and click-to-add course recommendations
 - a degree checklist with GE, major, and elective requirements plus a transfer credit toggle
-- an AI advisor chat experience with seeded guidance for course planning, prerequisites, and UCSB resources
-- an important dates view covering Winter 2026 academic and financial aid milestones
-- a financial aid view with aid breakdowns, disbursement timing, helpful links, and an FAQ accordion
+- an L&S-focused Campus Q&A panel for general questions, mandatory links to official UCSB pages on every reply, and clear handoff to L&S General Academic Advising for complex topics
+- an important dates view covering Winter 2026 academic milestones and early-quarter BARC timing
 
 ## Tech stack
 

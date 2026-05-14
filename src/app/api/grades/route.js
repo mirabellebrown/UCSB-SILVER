@@ -12,7 +12,7 @@ export async function GET(request) {
   if (normalizedRequestedCourses.length === 0) {
     return NextResponse.json(
       {
-        error: 'Add one or more course query parameters, for example ?course=CMPSC%20130B',
+        error: 'Add one or more course query parameters, for example ?course=ECON%20101',
       },
       { status: 400 },
     )
