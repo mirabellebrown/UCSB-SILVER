@@ -14,7 +14,7 @@ The current prototype includes:
 - a 4-year planner with a pre-filled Letters & Science sample Economics pathway and click-to-add course recommendations
 - a degree checklist with GE, major, and elective requirements plus a transfer credit toggle
 - an L&S-focused Campus Q&A panel for general questions, mandatory links to official UCSB pages on every reply, and clear handoff to L&S General Academic Advising for complex topics
-- an important dates view covering Winter 2026 academic milestones and early-quarter BARC timing
+- a simple Economics “prep map” that shows pre-major and prep courses unlocking a full-major milestone (demo interactions saved in the browser)
 
 ## Tech stack
 

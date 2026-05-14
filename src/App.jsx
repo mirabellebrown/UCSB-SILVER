@@ -5,6 +5,8 @@ import {
   advisorSuggestedCourses,
   chatbotSeedMessages,
   dashboardMetrics,
+  econPrepMapColumns,
+  econPrepMapNodes,
   navItems,
   plannerLegend,
   plannerSuggestions,
@@ -22,6 +24,31 @@ const storageKeys = {
   planner: 'prereqly-planner',
   transferCredits: 'prereqly-transfer-credits',
   manualRequirementCompletions: 'prereqly-manual-requirements',
+  econMap: 'prereqly-econ-map',
+}
+
+const econPrepMapById = Object.fromEntries(econPrepMapNodes.map((node) => [node.id, node]))
+
+function stripInvalidMapCompletions(ids) {
+  const set = new Set(ids)
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const id of [...set]) {
+      const node = econPrepMapById[id]
+      if (!node) {
+        set.delete(id)
+        changed = true
+        continue
+      }
+      const reqs = node.requires ?? []
+      if (!reqs.every((r) => set.has(r))) {
+        set.delete(id)
+        changed = true
+      }
+    }
+  }
+  return [...set].sort()
 }
 
 /** Official UCSB pages cited by the Campus Q&A tool (L&S–centric). */
@@ -245,6 +272,13 @@ function App() {
   })
   const [chatMessages, setChatMessages] = useState(chatbotSeedMessages)
   const [draftMessage, setDraftMessage] = useState('')
+  const [econMapCompletedIds, setEconMapCompletedIds] = useState(() => {
+    const stored = readStoredValue(storageKeys.econMap)
+    if (Array.isArray(stored) && stored.every((id) => typeof id === 'string')) {
+      return stripInvalidMapCompletions(stored)
+    }
+    return stripInvalidMapCompletions(['econ1', 'math3a'])
+  })
   const [selectedCourseGrades, setSelectedCourseGrades] = useState(null)
   const hasLoadedSavedState = true
 
@@ -252,7 +286,8 @@ function App() {
     writeStoredValue(storageKeys.planner, planner)
     writeStoredValue(storageKeys.transferCredits, transferCredits)
     writeStoredValue(storageKeys.manualRequirementCompletions, manualRequirementCompletions)
-  }, [planner, transferCredits, manualRequirementCompletions])
+    writeStoredValue(storageKeys.econMap, econMapCompletedIds)
+  }, [planner, transferCredits, manualRequirementCompletions, econMapCompletedIds])
 
   const plannedCourseCodes = useMemo(
     () =>
@@ -372,6 +407,22 @@ function App() {
     })
   }
 
+  function handleToggleEconMapNode(nodeId) {
+    setEconMapCompletedIds((prev) => {
+      const set = new Set(prev)
+      if (set.has(nodeId)) {
+        set.delete(nodeId)
+        return stripInvalidMapCompletions([...set])
+      }
+      const node = econPrepMapById[nodeId]
+      if (!node || !(node.requires ?? []).every((reqId) => set.has(reqId))) {
+        return prev
+      }
+      set.add(nodeId)
+      return stripInvalidMapCompletions([...set])
+    })
+  }
+
   function handleSendMessage() {
     const trimmed = draftMessage.trim()
     if (!trimmed) {
@@ -442,6 +493,9 @@ function App() {
       />
     ),
     dates: <DatesView />,
+    econMap: (
+      <EconPrepMapView completedIds={econMapCompletedIds} onToggleNode={handleToggleEconMapNode} />
+    ),
   }[activeView]
 
   return (
@@ -548,6 +602,7 @@ function App() {
                         {item.id === 'dashboard' && 'Overview, progress, and action cards'}
                         {item.id === 'planner' && 'Click-to-add roadmap across four years'}
                         {item.id === 'checklist' && 'Track requirements and transfer credit'}
+                        {item.id === 'econMap' && 'Pre-major prep unlocks upper-division (demo)'}
                         {item.id === 'chat' && 'General UCSB questions with official source links'}
                         {item.id === 'dates' && 'Winter 2026 deadlines and calendar'}
                       </span>
@@ -1683,6 +1738,121 @@ function ChatView({ draftMessage, messages, onDraftChange, onOpenCourseGrades, o
   )
 }
 
+function EconPrepMapView({ completedIds, onToggleNode }) {
+  const done = useMemo(() => new Set(completedIds), [completedIds])
+
+  function isUnlocked(node) {
+    return (node.requires ?? []).every((id) => done.has(id))
+  }
+
+  function isComplete(node) {
+    return done.has(node.id)
+  }
+
+  function missingLabels(node) {
+    return (node.requires ?? [])
+      .filter((id) => !done.has(id))
+      .map((id) => econPrepMapById[id]?.label ?? id)
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl">
+        <p className="text-sm uppercase tracking-[0.24em] text-[#FEBC11]">Economics prep map</p>
+        <h2 className="mt-2 text-3xl font-semibold tracking-tight">Pre-major and prep unlock upper division</h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
+          Tap tiles to mark them done in this demo. You cannot mark a tile until everything to its left in the graph is
+          satisfied. Clearing an earlier tile clears later tiles that depended on it. Progress is saved in this browser
+          only.
+        </p>
+
+        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          {econPrepMapColumns.map((col) => {
+            const nodes = econPrepMapNodes.filter((n) => n.column === col.index)
+            return (
+              <div
+                key={col.index}
+                className="flex flex-col rounded-[28px] border border-white/10 bg-slate-950/45 p-4 shadow-[0_12px_40px_rgba(2,8,23,0.25)]"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FEBC11]">{col.title}</p>
+                <p className="mt-1 text-sm text-slate-500">{col.subtitle}</p>
+                <div className="mt-4 flex flex-1 flex-col gap-3">
+                  {nodes.map((node) => {
+                    const unlocked = isUnlocked(node)
+                    const complete = isComplete(node)
+                    const missing = missingLabels(node)
+                    const interactive = unlocked
+
+                    return (
+                      <button
+                        key={node.id}
+                        type="button"
+                        disabled={!interactive}
+                        onClick={() => interactive && onToggleNode(node.id)}
+                        className={`rounded-2xl border p-4 text-left transition ${
+                          complete
+                            ? 'border-emerald-400/40 bg-emerald-500/10 shadow-[0_0_0_1px_rgba(52,211,153,0.15)]'
+                            : unlocked
+                              ? 'cursor-pointer border-sky-400/35 bg-sky-500/10 hover:border-[#FEBC11]/40 hover:bg-white/8'
+                              : 'cursor-not-allowed border-white/10 bg-slate-950/60 opacity-60'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-white">{node.label}</div>
+                            <div className="mt-1 text-sm text-slate-400">{node.subtitle}</div>
+                          </div>
+                          {complete ? (
+                            <span className="shrink-0 rounded-full bg-emerald-400/20 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-200">
+                              Done
+                            </span>
+                          ) : unlocked ? (
+                            <span className="shrink-0 rounded-full border border-white/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                              Tap
+                            </span>
+                          ) : (
+                            <span className="shrink-0 rounded-full bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              Locked
+                            </span>
+                          )}
+                        </div>
+                        {!unlocked && missing.length > 0 && (
+                          <p className="mt-3 text-xs leading-5 text-slate-500">
+                            Needs: {missing.join(', ')}
+                          </p>
+                        )}
+                        {unlocked && !complete && (
+                          <p className="mt-3 text-xs text-slate-500">Prerequisites satisfied — tap to mark complete.</p>
+                        )}
+                        {complete && (
+                          <p className="mt-3 text-xs text-slate-500">Tap again to clear (downstream tiles clear too).</p>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <p className="mt-6 text-xs leading-5 text-slate-500">
+          Illustrative graph for the prototype. Verify every prerequisite and major rule in the{' '}
+          <a
+            className="font-semibold text-[#FEBC11] underline-offset-2 hover:underline"
+            href="https://catalog.ucsb.edu/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            UCSB General Catalog
+          </a>{' '}
+          and with L&S and Economics advising.
+        </p>
+      </section>
+    </div>
+  )
+}
+
 function DatesView() {
   const calendarHighlights = {
     0: new Set([2, 5, 12, 16]),
@@ -1894,6 +2064,12 @@ function AppIcon({ name, className = 'h-5 w-5' }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.8"
+      />
+    ),
+    map: (
+      <path
+        d="M6 17h4v-6H6v6zm7 0h4V7h-4v10zm7-6h4v6h-4v-6z"
+        fill="currentColor"
       />
     ),
     bell: (

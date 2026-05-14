@@ -2,6 +2,7 @@ export const navItems = [
   { id: 'dashboard', label: 'Dashboard', shortLabel: 'Home', icon: 'dashboard' },
   { id: 'planner', label: '4-Year Planner', shortLabel: 'Planner', icon: 'planner' },
   { id: 'checklist', label: 'Degree Checklist', shortLabel: 'Checklist', icon: 'checklist' },
+  { id: 'econMap', label: 'Econ prep map', shortLabel: 'Map', icon: 'map' },
   { id: 'chat', label: 'Campus Q&A', shortLabel: 'Q&A', icon: 'chat' },
   { id: 'dates', label: 'Important Dates', shortLabel: 'Dates', icon: 'calendar' },
 ]
@@ -371,5 +372,74 @@ export const winterDates = [
     title: 'Winter finals begin',
     detail: 'Final exam period begins and runs through March 20.',
     category: 'academic',
+  },
+]
+
+/**
+ * Simplified prep graph for the demo L&S Economics path. Unlock order is illustrative;
+ * always verify prerequisites in GOLD and the UCSB General Catalog.
+ */
+export const econPrepMapColumns = [
+  { index: 0, title: 'Pre-major', subtitle: 'Intro economics and calculus' },
+  { index: 1, title: 'Major prep', subtitle: 'Theory and statistics before upper division' },
+  { index: 2, title: 'Full major', subtitle: 'Upper-division economics coursework' },
+]
+
+export const econPrepMapNodes = [
+  {
+    id: 'econ1',
+    label: 'ECON 1',
+    subtitle: 'Principles of Microeconomics',
+    column: 0,
+    requires: [],
+  },
+  {
+    id: 'econ2',
+    label: 'ECON 2',
+    subtitle: 'Principles of Macroeconomics',
+    column: 0,
+    requires: ['econ1'],
+  },
+  {
+    id: 'math3a',
+    label: 'MATH 3A',
+    subtitle: 'Calculus with Applications I',
+    column: 0,
+    requires: [],
+  },
+  {
+    id: 'math3b',
+    label: 'MATH 3B',
+    subtitle: 'Calculus with Applications II',
+    column: 1,
+    requires: ['math3a'],
+  },
+  {
+    id: 'econ10a',
+    label: 'ECON 10A',
+    subtitle: 'Intermediate Microeconomic Theory',
+    column: 1,
+    requires: ['econ1', 'math3a'],
+  },
+  {
+    id: 'pstat109',
+    label: 'PSTAT 109',
+    subtitle: 'Statistics for Economics',
+    column: 1,
+    requires: ['econ1', 'math3a'],
+  },
+  {
+    id: 'econ10b',
+    label: 'ECON 10B',
+    subtitle: 'Intermediate Macroeconomic Theory',
+    column: 1,
+    requires: ['econ10a'],
+  },
+  {
+    id: 'fullMajor',
+    label: 'Upper-division Economics',
+    subtitle: 'Declared major courses, electives, and concentration work',
+    column: 2,
+    requires: ['econ2', 'math3b', 'econ10a', 'pstat109', 'econ10b'],
   },
 ]
