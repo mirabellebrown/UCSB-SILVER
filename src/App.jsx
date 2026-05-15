@@ -1,12 +1,11 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import {
   advisorSuggestedCourses,
   chatbotSeedMessages,
   dashboardMetrics,
-  econPrepFlowchart,
-  econPrepMapNodes,
   navItems,
   plannerLegend,
   plannerSuggestions,
@@ -24,68 +23,6 @@ const storageKeys = {
   planner: 'prereqly-planner',
   transferCredits: 'prereqly-transfer-credits',
   manualRequirementCompletions: 'prereqly-manual-requirements',
-  econMap: 'prereqly-econ-map',
-}
-
-const econPrepMapById = Object.fromEntries(econPrepMapNodes.map((node) => [node.id, node]))
-const flowById = Object.fromEntries(econPrepFlowchart.nodes.map((node) => [node.id, node]))
-
-function flowAnchor(node, side) {
-  const cx = node.x + node.w / 2
-  const cy = node.y + node.h / 2
-  switch (side) {
-    case 'right':
-      return { x: node.x + node.w, y: cy }
-    case 'left':
-      return { x: node.x, y: cy }
-    case 'bottom':
-      return { x: cx, y: node.y + node.h }
-    case 'top':
-      return { x: cx, y: node.y }
-    default:
-      return { x: node.x + node.w, y: cy }
-  }
-}
-
-function flowEdgePath(fromNode, toNode, fromSide, toSide) {
-  const p1 = flowAnchor(fromNode, fromSide)
-  const p2 = flowAnchor(toNode, toSide)
-  if (fromSide === 'bottom' && toSide === 'top') {
-    const ym = (p1.y + p2.y) / 2
-    return `M ${p1.x} ${p1.y} C ${p1.x} ${ym}, ${p2.x} ${ym}, ${p2.x} ${p2.y}`
-  }
-  const midx = (p1.x + p2.x) / 2
-  return `M ${p1.x} ${p1.y} C ${midx} ${p1.y}, ${midx} ${p2.y}, ${p2.x} ${p2.y}`
-}
-
-function gateDiamondPoints(node) {
-  const cx = node.x + node.w / 2
-  const cy = node.y + node.h / 2
-  const rx = node.w / 2 + 4
-  const ry = node.h / 2 + 4
-  return `${cx},${cy - ry} ${cx + rx},${cy} ${cx},${cy + ry} ${cx - rx},${cy}`
-}
-
-function stripInvalidMapCompletions(ids) {
-  const set = new Set(ids)
-  let changed = true
-  while (changed) {
-    changed = false
-    for (const id of [...set]) {
-      const node = econPrepMapById[id]
-      if (!node) {
-        set.delete(id)
-        changed = true
-        continue
-      }
-      const reqs = node.requires ?? []
-      if (!reqs.every((r) => set.has(r))) {
-        set.delete(id)
-        changed = true
-      }
-    }
-  }
-  return [...set].sort()
 }
 
 /** Official UCSB pages cited by the Campus Q&A tool (L&S–centric). */
@@ -309,13 +246,6 @@ function App() {
   })
   const [chatMessages, setChatMessages] = useState(chatbotSeedMessages)
   const [draftMessage, setDraftMessage] = useState('')
-  const [econMapCompletedIds, setEconMapCompletedIds] = useState(() => {
-    const stored = readStoredValue(storageKeys.econMap)
-    if (Array.isArray(stored) && stored.every((id) => typeof id === 'string')) {
-      return stripInvalidMapCompletions(stored)
-    }
-    return stripInvalidMapCompletions(['econ1', 'math3a'])
-  })
   const [selectedCourseGrades, setSelectedCourseGrades] = useState(null)
   const hasLoadedSavedState = true
 
@@ -323,8 +253,7 @@ function App() {
     writeStoredValue(storageKeys.planner, planner)
     writeStoredValue(storageKeys.transferCredits, transferCredits)
     writeStoredValue(storageKeys.manualRequirementCompletions, manualRequirementCompletions)
-    writeStoredValue(storageKeys.econMap, econMapCompletedIds)
-  }, [planner, transferCredits, manualRequirementCompletions, econMapCompletedIds])
+  }, [planner, transferCredits, manualRequirementCompletions])
 
   const plannedCourseCodes = useMemo(
     () =>
@@ -444,22 +373,6 @@ function App() {
     })
   }
 
-  function handleToggleEconMapNode(nodeId) {
-    setEconMapCompletedIds((prev) => {
-      const set = new Set(prev)
-      if (set.has(nodeId)) {
-        set.delete(nodeId)
-        return stripInvalidMapCompletions([...set])
-      }
-      const node = econPrepMapById[nodeId]
-      if (!node || !(node.requires ?? []).every((reqId) => set.has(reqId))) {
-        return prev
-      }
-      set.add(nodeId)
-      return stripInvalidMapCompletions([...set])
-    })
-  }
-
   function handleSendMessage() {
     const trimmed = draftMessage.trim()
     if (!trimmed) {
@@ -530,9 +443,6 @@ function App() {
       />
     ),
     dates: <DatesView />,
-    econMap: (
-      <EconPrepMapView completedIds={econMapCompletedIds} onToggleNode={handleToggleEconMapNode} />
-    ),
   }[activeView]
 
   return (
@@ -639,7 +549,6 @@ function App() {
                         {item.id === 'dashboard' && 'Overview, progress, and action cards'}
                         {item.id === 'planner' && 'Click-to-add roadmap across four years'}
                         {item.id === 'checklist' && 'Track requirements and transfer credit'}
-                        {item.id === 'econMap' && 'Pre-major prep unlocks upper-division (demo)'}
                         {item.id === 'chat' && 'General UCSB questions with official source links'}
                         {item.id === 'dates' && 'Winter 2026 deadlines and calendar'}
                       </span>
@@ -683,7 +592,7 @@ function DashboardView({ checklistPercent, onNavigate, planner }) {
               </h2>
               <p className="mt-4 max-w-xl text-base leading-7 text-slate-300">
                 Your planner and checklist are aligned, you have no active holds, and the next
-                best move is to build a balanced Spring quarter around your CS sequence.
+                best move is to build a balanced Spring quarter around your Economics pathway.
               </p>
             </div>
 
@@ -750,13 +659,9 @@ function DashboardView({ checklistPercent, onNavigate, planner }) {
         </div>
 
         <div className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-4">
-          {quickAccessCards.map((card) => (
-            <button
-              key={card.id}
-              type="button"
-              onClick={() => onNavigate(card.id)}
-              className={`group rounded-[28px] border border-white/10 bg-gradient-to-br ${card.accent} from-10% to-90% p-[1px] text-left transition hover:-translate-y-0.5`}
-            >
+          {quickAccessCards.map((card) => {
+            const shellClass = `group rounded-[28px] border border-white/10 bg-gradient-to-br ${card.accent} from-10% to-90% p-[1px] text-left transition hover:-translate-y-0.5`
+            const inner = (
               <div className="h-full rounded-[27px] bg-slate-950/85 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -768,8 +673,20 @@ function DashboardView({ checklistPercent, onNavigate, planner }) {
                   </span>
                 </div>
               </div>
-            </button>
-          ))}
+            )
+            if (card.href) {
+              return (
+                <Link key={card.id} href={card.href} className={shellClass}>
+                  {inner}
+                </Link>
+              )
+            }
+            return (
+              <button key={card.id} type="button" onClick={() => onNavigate(card.id)} className={shellClass}>
+                {inner}
+              </button>
+            )
+          })}
         </div>
       </section>
     </div>
@@ -1775,224 +1692,6 @@ function ChatView({ draftMessage, messages, onDraftChange, onOpenCourseGrades, o
   )
 }
 
-function EconPrepMapView({ completedIds, onToggleNode }) {
-  const done = useMemo(() => new Set(completedIds), [completedIds])
-  const { width, height, edges, nodes } = econPrepFlowchart
-
-  function isUnlockedCourse(node) {
-    if (node.kind !== 'course') {
-      return false
-    }
-    return (node.requires ?? []).every((id) => done.has(id))
-  }
-
-  function isCompleteCourse(node) {
-    return node.kind === 'course' && done.has(node.id)
-  }
-
-  function missingLabels(node) {
-    return (node.requires ?? [])
-      .filter((id) => !done.has(id))
-      .map((id) => econPrepMapById[id]?.label ?? id)
-  }
-
-  function courseStroke(node) {
-    if (isCompleteCourse(node)) {
-      return { fill: 'rgba(6, 78, 59, 0.45)', stroke: '#34d399' }
-    }
-    if (isUnlockedCourse(node)) {
-      return { fill: 'rgba(30, 58, 138, 0.35)', stroke: '#7dd3fc' }
-    }
-    return { fill: 'rgba(15, 23, 42, 0.85)', stroke: 'rgba(148, 163, 184, 0.45)' }
-  }
-
-  function edgePaint(edge) {
-    const target = flowById[edge.to]
-    if (!target) {
-      return 'rgba(148, 163, 184, 0.35)'
-    }
-    if (target.kind === 'course' && done.has(edge.to)) {
-      return 'rgba(52, 211, 153, 0.75)'
-    }
-    if (target.kind === 'course' && isUnlockedCourse(target)) {
-      return 'rgba(148, 163, 184, 0.65)'
-    }
-    return 'rgba(71, 85, 105, 0.55)'
-  }
-
-  return (
-    <div className="space-y-6">
-      <section className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl">
-        <p className="text-sm uppercase tracking-[0.24em] text-[#FEBC11]">Economics prep map</p>
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight">Flowchart: prep unlocks the full major</h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
-          Boxes are courses; small <span className="font-semibold text-slate-200">All</span> diamonds mean every
-          incoming path must be complete before the next course unlocks. Click a course when it is available to mark
-          it done (saved in this browser). Clear an earlier course to cascade-clear dependents.
-        </p>
-
-        <div className="mt-6 overflow-x-auto rounded-[24px] border border-white/10 bg-[#0c1522] p-4 shadow-inner">
-          <svg
-            role="img"
-            aria-label="Economics prerequisite flowchart"
-            width={width}
-            height={height}
-            viewBox={`0 0 ${width} ${height}`}
-            className="min-w-[860px] font-sans"
-          >
-            <defs>
-              <marker id="flow-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                <path d="M0,0 L8,4 L0,8 z" fill="rgba(148, 163, 184, 0.85)" />
-              </marker>
-              <marker id="flow-arrow-done" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                <path d="M0,0 L8,4 L0,8 z" fill="rgba(52, 211, 153, 0.9)" />
-              </marker>
-            </defs>
-
-            {edges.map((edge) => {
-              const fromNode = flowById[edge.from]
-              const toNode = flowById[edge.to]
-              if (!fromNode || !toNode) {
-                return null
-              }
-              const d = flowEdgePath(fromNode, toNode, edge.fromSide, edge.toSide)
-              const paint = edgePaint(edge)
-              const doneEdge = toNode.kind === 'course' && done.has(edge.to)
-              return (
-                <path
-                  key={`${edge.from}-${edge.to}`}
-                  d={d}
-                  fill="none"
-                  stroke={paint}
-                  strokeWidth="1.75"
-                  markerEnd={doneEdge ? 'url(#flow-arrow-done)' : 'url(#flow-arrow)'}
-                />
-              )
-            })}
-
-            {nodes.map((node) => {
-              if (node.kind === 'gate') {
-                return (
-                  <g key={node.id}>
-                    <polygon
-                      points={gateDiamondPoints(node)}
-                      fill="rgba(248, 250, 252, 0.94)"
-                      stroke="rgba(100, 116, 139, 0.9)"
-                      strokeWidth="1.25"
-                    />
-                    <text
-                      x={node.x + node.w / 2}
-                      y={node.y + node.h / 2 + 4}
-                      textAnchor="middle"
-                      className="fill-slate-700 text-[11px] font-bold"
-                    >
-                      {node.label}
-                    </text>
-                  </g>
-                )
-              }
-
-              const courseNode = econPrepMapById[node.id]
-              const unlocked = courseNode ? isUnlockedCourse(node) : false
-              const complete = courseNode ? isCompleteCourse(node) : false
-              const missing = courseNode ? missingLabels(node) : []
-              const interactive = courseNode && unlocked
-              const { fill, stroke } = courseStroke(node)
-              const title = !unlocked && missing.length ? `Locked — needs: ${missing.join(', ')}` : node.label
-
-              return (
-                <g
-                  key={node.id}
-                  className={interactive ? 'cursor-pointer' : complete ? 'cursor-pointer' : 'cursor-not-allowed'}
-                  onClick={() => courseNode && (unlocked || complete) && onToggleNode(node.id)}
-                >
-                  <title>{title}</title>
-                  <rect
-                    x={node.x}
-                    y={node.y}
-                    width={node.w}
-                    height={node.h}
-                    rx={node.id === 'fullMajor' ? 14 : 12}
-                    fill={fill}
-                    stroke={stroke}
-                    strokeWidth="1.75"
-                  />
-                  <text
-                    x={node.x + 14}
-                    y={node.y + 26}
-                    className="fill-white text-[13px] font-semibold tracking-tight"
-                  >
-                    {node.label}
-                  </text>
-                  <text
-                    x={node.x + 14}
-                    y={node.y + 44}
-                    className="fill-slate-400 text-[11px]"
-                  >
-                    {node.subtitle}
-                  </text>
-                  {complete && (
-                    <text
-                      x={node.x + node.w - 12}
-                      y={node.y + 26}
-                      textAnchor="end"
-                      className="fill-emerald-300 text-[10px] font-bold uppercase tracking-[0.12em]"
-                    >
-                      Done
-                    </text>
-                  )}
-                  {!complete && unlocked && (
-                    <text
-                      x={node.x + node.w - 12}
-                      y={node.y + 26}
-                      textAnchor="end"
-                      className="fill-sky-200 text-[10px] font-bold uppercase tracking-[0.12em]"
-                    >
-                      Tap
-                    </text>
-                  )}
-                  {!unlocked && !complete && (
-                    <text
-                      x={node.x + node.w - 12}
-                      y={node.y + 26}
-                      textAnchor="end"
-                      className="fill-slate-500 text-[10px] font-bold uppercase tracking-[0.12em]"
-                    >
-                      Locked
-                    </text>
-                  )}
-                </g>
-              )
-            })}
-          </svg>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
-          <span className="rounded-full border border-white/10 bg-slate-950/50 px-3 py-1">
-            <span className="font-semibold text-slate-300">All</span> = AND (every incoming course finished)
-          </span>
-          <span className="rounded-full border border-white/10 bg-slate-950/50 px-3 py-1">
-            Inspired by flow-style degree maps; not an official audit
-          </span>
-        </div>
-
-        <p className="mt-4 text-xs leading-5 text-slate-500">
-          Illustrative graph for the prototype. Verify every prerequisite and major rule in the{' '}
-          <a
-            className="font-semibold text-[#FEBC11] underline-offset-2 hover:underline"
-            href="https://catalog.ucsb.edu/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            UCSB General Catalog
-          </a>{' '}
-          and with L&S and Economics advising.
-        </p>
-      </section>
-    </div>
-  )
-}
-
 function DatesView() {
   const calendarHighlights = {
     0: new Set([2, 5, 12, 16]),
@@ -2204,12 +1903,6 @@ function AppIcon({ name, className = 'h-5 w-5' }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.8"
-      />
-    ),
-    map: (
-      <path
-        d="M6 17h4v-6H6v6zm7 0h4V7h-4v10zm7-6h4v6h-4v-6z"
-        fill="currentColor"
       />
     ),
     bell: (
