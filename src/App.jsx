@@ -5,7 +5,7 @@ import {
   advisorSuggestedCourses,
   chatbotSeedMessages,
   dashboardMetrics,
-  econPrepMapColumns,
+  econPrepFlowchart,
   econPrepMapNodes,
   navItems,
   plannerLegend,
@@ -28,6 +28,43 @@ const storageKeys = {
 }
 
 const econPrepMapById = Object.fromEntries(econPrepMapNodes.map((node) => [node.id, node]))
+const flowById = Object.fromEntries(econPrepFlowchart.nodes.map((node) => [node.id, node]))
+
+function flowAnchor(node, side) {
+  const cx = node.x + node.w / 2
+  const cy = node.y + node.h / 2
+  switch (side) {
+    case 'right':
+      return { x: node.x + node.w, y: cy }
+    case 'left':
+      return { x: node.x, y: cy }
+    case 'bottom':
+      return { x: cx, y: node.y + node.h }
+    case 'top':
+      return { x: cx, y: node.y }
+    default:
+      return { x: node.x + node.w, y: cy }
+  }
+}
+
+function flowEdgePath(fromNode, toNode, fromSide, toSide) {
+  const p1 = flowAnchor(fromNode, fromSide)
+  const p2 = flowAnchor(toNode, toSide)
+  if (fromSide === 'bottom' && toSide === 'top') {
+    const ym = (p1.y + p2.y) / 2
+    return `M ${p1.x} ${p1.y} C ${p1.x} ${ym}, ${p2.x} ${ym}, ${p2.x} ${p2.y}`
+  }
+  const midx = (p1.x + p2.x) / 2
+  return `M ${p1.x} ${p1.y} C ${midx} ${p1.y}, ${midx} ${p2.y}, ${p2.x} ${p2.y}`
+}
+
+function gateDiamondPoints(node) {
+  const cx = node.x + node.w / 2
+  const cy = node.y + node.h / 2
+  const rx = node.w / 2 + 4
+  const ry = node.h / 2 + 4
+  return `${cx},${cy - ry} ${cx + rx},${cy} ${cx},${cy + ry} ${cx - rx},${cy}`
+}
 
 function stripInvalidMapCompletions(ids) {
   const set = new Set(ids)
@@ -1740,13 +1777,17 @@ function ChatView({ draftMessage, messages, onDraftChange, onOpenCourseGrades, o
 
 function EconPrepMapView({ completedIds, onToggleNode }) {
   const done = useMemo(() => new Set(completedIds), [completedIds])
+  const { width, height, edges, nodes } = econPrepFlowchart
 
-  function isUnlocked(node) {
+  function isUnlockedCourse(node) {
+    if (node.kind !== 'course') {
+      return false
+    }
     return (node.requires ?? []).every((id) => done.has(id))
   }
 
-  function isComplete(node) {
-    return done.has(node.id)
+  function isCompleteCourse(node) {
+    return node.kind === 'course' && done.has(node.id)
   }
 
   function missingLabels(node) {
@@ -1755,88 +1796,187 @@ function EconPrepMapView({ completedIds, onToggleNode }) {
       .map((id) => econPrepMapById[id]?.label ?? id)
   }
 
+  function courseStroke(node) {
+    if (isCompleteCourse(node)) {
+      return { fill: 'rgba(6, 78, 59, 0.45)', stroke: '#34d399' }
+    }
+    if (isUnlockedCourse(node)) {
+      return { fill: 'rgba(30, 58, 138, 0.35)', stroke: '#7dd3fc' }
+    }
+    return { fill: 'rgba(15, 23, 42, 0.85)', stroke: 'rgba(148, 163, 184, 0.45)' }
+  }
+
+  function edgePaint(edge) {
+    const target = flowById[edge.to]
+    if (!target) {
+      return 'rgba(148, 163, 184, 0.35)'
+    }
+    if (target.kind === 'course' && done.has(edge.to)) {
+      return 'rgba(52, 211, 153, 0.75)'
+    }
+    if (target.kind === 'course' && isUnlockedCourse(target)) {
+      return 'rgba(148, 163, 184, 0.65)'
+    }
+    return 'rgba(71, 85, 105, 0.55)'
+  }
+
   return (
     <div className="space-y-6">
       <section className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur-xl">
         <p className="text-sm uppercase tracking-[0.24em] text-[#FEBC11]">Economics prep map</p>
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight">Pre-major and prep unlock upper division</h2>
+        <h2 className="mt-2 text-3xl font-semibold tracking-tight">Flowchart: prep unlocks the full major</h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
-          Tap tiles to mark them done in this demo. You cannot mark a tile until everything to its left in the graph is
-          satisfied. Clearing an earlier tile clears later tiles that depended on it. Progress is saved in this browser
-          only.
+          Boxes are courses; small <span className="font-semibold text-slate-200">All</span> diamonds mean every
+          incoming path must be complete before the next course unlocks. Click a course when it is available to mark
+          it done (saved in this browser). Clear an earlier course to cascade-clear dependents.
         </p>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
-          {econPrepMapColumns.map((col) => {
-            const nodes = econPrepMapNodes.filter((n) => n.column === col.index)
-            return (
-              <div
-                key={col.index}
-                className="flex flex-col rounded-[28px] border border-white/10 bg-slate-950/45 p-4 shadow-[0_12px_40px_rgba(2,8,23,0.25)]"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FEBC11]">{col.title}</p>
-                <p className="mt-1 text-sm text-slate-500">{col.subtitle}</p>
-                <div className="mt-4 flex flex-1 flex-col gap-3">
-                  {nodes.map((node) => {
-                    const unlocked = isUnlocked(node)
-                    const complete = isComplete(node)
-                    const missing = missingLabels(node)
-                    const interactive = unlocked
+        <div className="mt-6 overflow-x-auto rounded-[24px] border border-white/10 bg-[#0c1522] p-4 shadow-inner">
+          <svg
+            role="img"
+            aria-label="Economics prerequisite flowchart"
+            width={width}
+            height={height}
+            viewBox={`0 0 ${width} ${height}`}
+            className="min-w-[860px] font-sans"
+          >
+            <defs>
+              <marker id="flow-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 z" fill="rgba(148, 163, 184, 0.85)" />
+              </marker>
+              <marker id="flow-arrow-done" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 z" fill="rgba(52, 211, 153, 0.9)" />
+              </marker>
+            </defs>
 
-                    return (
-                      <button
-                        key={node.id}
-                        type="button"
-                        disabled={!interactive}
-                        onClick={() => interactive && onToggleNode(node.id)}
-                        className={`rounded-2xl border p-4 text-left transition ${
-                          complete
-                            ? 'border-emerald-400/40 bg-emerald-500/10 shadow-[0_0_0_1px_rgba(52,211,153,0.15)]'
-                            : unlocked
-                              ? 'cursor-pointer border-sky-400/35 bg-sky-500/10 hover:border-[#FEBC11]/40 hover:bg-white/8'
-                              : 'cursor-not-allowed border-white/10 bg-slate-950/60 opacity-60'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="font-semibold text-white">{node.label}</div>
-                            <div className="mt-1 text-sm text-slate-400">{node.subtitle}</div>
-                          </div>
-                          {complete ? (
-                            <span className="shrink-0 rounded-full bg-emerald-400/20 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-200">
-                              Done
-                            </span>
-                          ) : unlocked ? (
-                            <span className="shrink-0 rounded-full border border-white/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                              Tap
-                            </span>
-                          ) : (
-                            <span className="shrink-0 rounded-full bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                              Locked
-                            </span>
-                          )}
-                        </div>
-                        {!unlocked && missing.length > 0 && (
-                          <p className="mt-3 text-xs leading-5 text-slate-500">
-                            Needs: {missing.join(', ')}
-                          </p>
-                        )}
-                        {unlocked && !complete && (
-                          <p className="mt-3 text-xs text-slate-500">Prerequisites satisfied — tap to mark complete.</p>
-                        )}
-                        {complete && (
-                          <p className="mt-3 text-xs text-slate-500">Tap again to clear (downstream tiles clear too).</p>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
+            {edges.map((edge) => {
+              const fromNode = flowById[edge.from]
+              const toNode = flowById[edge.to]
+              if (!fromNode || !toNode) {
+                return null
+              }
+              const d = flowEdgePath(fromNode, toNode, edge.fromSide, edge.toSide)
+              const paint = edgePaint(edge)
+              const doneEdge = toNode.kind === 'course' && done.has(edge.to)
+              return (
+                <path
+                  key={`${edge.from}-${edge.to}`}
+                  d={d}
+                  fill="none"
+                  stroke={paint}
+                  strokeWidth="1.75"
+                  markerEnd={doneEdge ? 'url(#flow-arrow-done)' : 'url(#flow-arrow)'}
+                />
+              )
+            })}
+
+            {nodes.map((node) => {
+              if (node.kind === 'gate') {
+                return (
+                  <g key={node.id}>
+                    <polygon
+                      points={gateDiamondPoints(node)}
+                      fill="rgba(248, 250, 252, 0.94)"
+                      stroke="rgba(100, 116, 139, 0.9)"
+                      strokeWidth="1.25"
+                    />
+                    <text
+                      x={node.x + node.w / 2}
+                      y={node.y + node.h / 2 + 4}
+                      textAnchor="middle"
+                      className="fill-slate-700 text-[11px] font-bold"
+                    >
+                      {node.label}
+                    </text>
+                  </g>
+                )
+              }
+
+              const courseNode = econPrepMapById[node.id]
+              const unlocked = courseNode ? isUnlockedCourse(node) : false
+              const complete = courseNode ? isCompleteCourse(node) : false
+              const missing = courseNode ? missingLabels(node) : []
+              const interactive = courseNode && unlocked
+              const { fill, stroke } = courseStroke(node)
+              const title = !unlocked && missing.length ? `Locked — needs: ${missing.join(', ')}` : node.label
+
+              return (
+                <g
+                  key={node.id}
+                  className={interactive ? 'cursor-pointer' : complete ? 'cursor-pointer' : 'cursor-not-allowed'}
+                  onClick={() => courseNode && (unlocked || complete) && onToggleNode(node.id)}
+                >
+                  <title>{title}</title>
+                  <rect
+                    x={node.x}
+                    y={node.y}
+                    width={node.w}
+                    height={node.h}
+                    rx={node.id === 'fullMajor' ? 14 : 12}
+                    fill={fill}
+                    stroke={stroke}
+                    strokeWidth="1.75"
+                  />
+                  <text
+                    x={node.x + 14}
+                    y={node.y + 26}
+                    className="fill-white text-[13px] font-semibold tracking-tight"
+                  >
+                    {node.label}
+                  </text>
+                  <text
+                    x={node.x + 14}
+                    y={node.y + 44}
+                    className="fill-slate-400 text-[11px]"
+                  >
+                    {node.subtitle}
+                  </text>
+                  {complete && (
+                    <text
+                      x={node.x + node.w - 12}
+                      y={node.y + 26}
+                      textAnchor="end"
+                      className="fill-emerald-300 text-[10px] font-bold uppercase tracking-[0.12em]"
+                    >
+                      Done
+                    </text>
+                  )}
+                  {!complete && unlocked && (
+                    <text
+                      x={node.x + node.w - 12}
+                      y={node.y + 26}
+                      textAnchor="end"
+                      className="fill-sky-200 text-[10px] font-bold uppercase tracking-[0.12em]"
+                    >
+                      Tap
+                    </text>
+                  )}
+                  {!unlocked && !complete && (
+                    <text
+                      x={node.x + node.w - 12}
+                      y={node.y + 26}
+                      textAnchor="end"
+                      className="fill-slate-500 text-[10px] font-bold uppercase tracking-[0.12em]"
+                    >
+                      Locked
+                    </text>
+                  )}
+                </g>
+              )
+            })}
+          </svg>
         </div>
 
-        <p className="mt-6 text-xs leading-5 text-slate-500">
+        <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
+          <span className="rounded-full border border-white/10 bg-slate-950/50 px-3 py-1">
+            <span className="font-semibold text-slate-300">All</span> = AND (every incoming course finished)
+          </span>
+          <span className="rounded-full border border-white/10 bg-slate-950/50 px-3 py-1">
+            Inspired by flow-style degree maps; not an official audit
+          </span>
+        </div>
+
+        <p className="mt-4 text-xs leading-5 text-slate-500">
           Illustrative graph for the prototype. Verify every prerequisite and major rule in the{' '}
           <a
             className="font-semibold text-[#FEBC11] underline-offset-2 hover:underline"
