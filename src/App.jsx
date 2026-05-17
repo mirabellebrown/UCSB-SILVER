@@ -51,6 +51,7 @@ import { useGeEasyPicks } from './lib/useGeEasyPicks'
 import { politicalScienceMinorPreview } from './data/politicalScienceMinorPreview'
 import { chatPromptSuggestions } from './data/campusResources'
 import { buildChatReply, ensureOfficialSources, OFFICIAL_SOURCE } from './lib/chatIntents'
+import { buildGraduationSummary } from './lib/graduationProgress'
 
 const quarters = ['Fall', 'Winter', 'Spring']
 const storageKeys = {
@@ -222,14 +223,16 @@ function App() {
   )
 
   const allRequirementItems = checklistSections.flatMap((section) => section.items)
-  const completedRequirementCount = allRequirementItems.filter((item) => item.isSatisfied).length
-  const plannedRequirementCount = allRequirementItems.filter((item) => item.isPlanned).length
-  const checklistPercent = Math.round(
-    (completedRequirementCount / allRequirementItems.length) * 100,
+  const graduationSummary = useMemo(
+    () => buildGraduationSummary({ studentProfile, checklistSections }),
+    [checklistSections],
   )
-  const plannedCoveragePercent = Math.round(
-    ((completedRequirementCount + plannedRequirementCount) / allRequirementItems.length) * 100,
-  )
+  const {
+    checklistPercent,
+    plannedCoveragePercent,
+    completedRequirementCount,
+    plannedRequirementCount,
+  } = graduationSummary
   const transferAutoFilled = allRequirementItems.filter((item) => item.source === 'transfer').length
 
   const satisfiedCourseCodes = useMemo(() => {
@@ -424,6 +427,7 @@ function App() {
     <>
       <AppShell
         studentProfile={studentProfile}
+        graduationSummary={graduationSummary}
         navItems={navItems}
         activeView={activeView}
         onNavigate={handleNavigate}

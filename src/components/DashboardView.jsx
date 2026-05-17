@@ -150,16 +150,20 @@ export function DashboardView({ checklistSections, onNavigate, planner }) {
           </div>
 
           <div className="space-y-3 border-t border-silver/30 pt-6">
-            <div className="flex items-center justify-between text-sm text-slate-300">
-              <span>Overall completion (demo)</span>
-              <span className="font-semibold text-gold">{studentProfile.completedPercent}%</span>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-300">
+              <span>Requirements complete (demo)</span>
+              <span className="font-semibold text-gold">{graduation.checklistPercent}%</span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-slate-800/80 ring-1 ring-gold/10">
               <div
                 className="progress-silver h-full rounded-full"
-                style={{ width: `${studentProfile.completedPercent}%` }}
+                style={{ width: `${graduation.checklistPercent}%` }}
               />
             </div>
+            <p className="text-xs text-slate-500">
+              Units: {graduation.unitsCompleted} / {graduation.unitsTarget} ({graduation.unitsPercent}% toward
+              180) · Planned coverage if enrolled: {graduation.plannedCoveragePercent}%
+            </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {dashboardMetrics.map((metric) => (
                 <div

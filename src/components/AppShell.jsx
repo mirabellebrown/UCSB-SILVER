@@ -18,6 +18,7 @@ function InfoTile({ label, value }) {
 
 export function AppShell({
   studentProfile,
+  graduationSummary,
   navItems,
   activeView,
   onNavigate,
@@ -25,6 +26,7 @@ export function AppShell({
   children,
   renderNavDescription,
 }) {
+  const progressPercent = graduationSummary?.checklistPercent ?? 0
   const [remindersOpen, setRemindersOpen] = useState(false)
   const timelineEvents = useMemo(() => getTimelineEvents(), [])
   const upcomingCount = useMemo(() => countUpcomingEvents(timelineEvents), [timelineEvents])
@@ -118,13 +120,13 @@ export function AppShell({
 
               <div className="mt-5 space-y-3">
                 <div className="flex items-center justify-between text-sm text-slate-300">
-                  <span>Graduation progress</span>
-                  <span className="font-semibold text-white">{studentProfile.completedPercent}%</span>
+                  <span>Requirements complete</span>
+                  <span className="font-semibold text-white">{progressPercent}%</span>
                 </div>
                 <div className="h-3 overflow-hidden rounded-full bg-slate-800/80">
                   <div
                     className="progress-silver h-full rounded-2xl"
-                    style={{ width: `${studentProfile.completedPercent}%` }}
+                    style={{ width: `${progressPercent}%` }}
                   />
                 </div>
               </div>

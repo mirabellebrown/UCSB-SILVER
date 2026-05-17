@@ -16,8 +16,14 @@ export function buildGraduationSummary({ studentProfile, checklistSections }) {
   )
 
   const completedCount = allItems.filter((item) => item.isSatisfied).length
-  const checklistPercent =
-    allItems.length > 0 ? Math.round((completedCount / allItems.length) * 100) : 0
+  const plannedCount = allItems.filter((item) => item.isPlanned && !item.isSatisfied).length
+  const totalCount = allItems.length
+
+  const checklistPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+  const plannedCoveragePercent =
+    totalCount > 0 ? Math.round(((completedCount + plannedCount) / totalCount) * 100) : 0
+  const unitsPercent =
+    DEGREE_UNIT_TARGET > 0 ? Math.round((unitsCompleted / DEGREE_UNIT_TARGET) * 100) : 0
 
   const whatsLeft = allItems
     .filter((item) => !item.isSatisfied)
@@ -82,6 +88,11 @@ export function buildGraduationSummary({ studentProfile, checklistSections }) {
 
   return {
     checklistPercent,
+    plannedCoveragePercent,
+    unitsPercent,
+    completedRequirementCount: completedCount,
+    plannedRequirementCount: plannedCount,
+    totalRequirementCount: totalCount,
     expectedGraduation: studentProfile.expectedGraduation,
     unitsCompleted,
     unitsTarget: DEGREE_UNIT_TARGET,

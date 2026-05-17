@@ -313,7 +313,7 @@ export function EconPrepMapFlowchart({ showBackLink = true }) {
         </div>
       </div>
 
-      <div className="overflow-auto rounded-2xl border border-silver/30 bg-slate-950/40 p-4 shadow-inner max-h-[min(72vh,620px)]">
+      <div className="overflow-auto rounded-2xl border border-silver/30 bg-slate-950/40 p-5 pt-7 shadow-inner max-h-[min(72vh,620px)]">
         <svg
           role="img"
           aria-label="Economics prerequisite flowchart"

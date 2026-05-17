@@ -15,7 +15,6 @@ export const studentProfile = {
   major: 'B.A. Economics',
   college: 'College of Letters & Science',
   year: 'Second Year',
-  completedPercent: 68,
   unitsCompleted: 112,
   expectedGraduation: 'Spring 2028',
   standing: 'Good standing',

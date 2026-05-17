@@ -12,8 +12,8 @@ export default function EconPrepMapPage() {
     <div className="app-page-bg relative min-h-screen text-slate-50">
       <div className="app-page-overlay pointer-events-none fixed inset-0" />
 
-      <header className="sticky top-0 z-50 border-b border-silver/35 bg-logo-navy pb-2 shadow-[0_8px_32px_rgba(20,52,116,0.35)]">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-8">
+      <header className="border-b border-silver/35 bg-logo-navy shadow-[0_8px_32px_rgba(20,52,116,0.35)]">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-4 px-4 py-6 sm:px-8 sm:py-7">
           <div>
             <SilverLogo height={40} href="/" />
             <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -27,7 +27,7 @@ export default function EconPrepMapPage() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-[1600px] px-4 pb-10 pt-8 sm:px-8 sm:pt-10">
+      <main className="relative z-10 mx-auto max-w-[1600px] px-4 pb-12 pt-10 sm:px-8 sm:pt-12">
         <EconPrepMapFlowchart showBackLink />
       </main>
     </div>
