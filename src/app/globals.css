@@ -26,6 +26,10 @@
   --border-subtle: rgba(255, 255, 255, 0.1);
   --silver-glow: rgba(203, 213, 225, 0.35);
   --gold-glow: rgba(254, 188, 17, 0.35);
+
+  --radius-panel: 6px;
+  --radius-inner: 4px;
+  --radius-chip: 3px;
 }
 
 * {
@@ -88,8 +92,13 @@ input {
   color: var(--color-silver-bright);
 }
 
+.panel {
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--border-subtle);
+}
+
 .surface-card {
-  border-radius: 28px;
+  border-radius: var(--radius-panel);
   border: 1px solid var(--border-subtle);
   background: var(--surface-elevated);
   box-shadow: 0 20px 80px rgba(2, 8, 23, 0.35);
@@ -97,7 +106,7 @@ input {
 }
 
 .snapshot-card {
-  border-radius: 1.5rem;
+  border-radius: var(--radius-panel);
   border: 1px solid color-mix(in srgb, var(--color-silver) 25%, transparent);
   background: linear-gradient(to bottom right, var(--color-ucsb-navy), #0b2d52, #020617);
   padding: 1.25rem;
@@ -125,6 +134,7 @@ input {
 }
 
 .link-gold {
+  border-radius: var(--radius-chip);
   border: 1px solid color-mix(in srgb, var(--color-gold) 25%, transparent);
   background: color-mix(in srgb, var(--color-gold) 10%, transparent);
   color: var(--color-gold);
@@ -140,7 +150,7 @@ input {
 }
 
 .btn-gold {
-  border-radius: 9999px;
+  border-radius: var(--radius-chip);
   background: var(--color-gold);
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
@@ -154,7 +164,7 @@ input {
 }
 
 .btn-silver {
-  border-radius: 1rem;
+  border-radius: var(--radius-chip);
   background: var(--color-silver);
   padding: 0.75rem 1.25rem;
   font-size: 0.875rem;
