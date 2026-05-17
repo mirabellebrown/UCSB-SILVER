@@ -4,7 +4,7 @@ UCSB SILVER is a Next.js prototype for a UC Santa Barbara academic planning app.
 
 ## Live demo
 
-[https://prereqly.vercel.app/](https://prereqly.vercel.app/) *(deployment URL may be updated)*
+[https://ucsb-silver.vercel.app/](https://ucsb-silver.vercel.app/) — update this URL in Vercel after renaming the project from PreReqly.
 
 ## Functionality
 
