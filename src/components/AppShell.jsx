@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { GoldLink } from './GoldLink'
 import { AppIcon } from './AppIcon'
 import { ReminderPanel } from './ReminderPanel'
@@ -25,8 +25,27 @@ export function AppShell({
   renderNavDescription,
 }) {
   const [remindersOpen, setRemindersOpen] = useState(false)
+  const [sidebarVisible, setSidebarVisible] = useState(activeView !== 'dashboard')
   const timelineEvents = useMemo(() => getTimelineEvents(), [])
   const upcomingCount = useMemo(() => countUpcomingEvents(timelineEvents), [timelineEvents])
+  const isDashboard = activeView === 'dashboard'
+
+  useEffect(() => {
+    if (!isDashboard) {
+      setSidebarVisible(true)
+      return undefined
+    }
+
+    setSidebarVisible(false)
+
+    const revealSidebar = () => {
+      setSidebarVisible(window.scrollY > 300)
+    }
+
+    revealSidebar()
+    window.addEventListener('scroll', revealSidebar, { passive: true })
+    return () => window.removeEventListener('scroll', revealSidebar)
+  }, [isDashboard])
 
   return (
     <div className="app-page-bg relative min-h-screen overflow-hidden text-slate-50">
@@ -81,8 +100,19 @@ export function AppShell({
         />
       )}
 
-      <div className="mx-auto flex max-w-[1600px] flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row lg:px-8">
-        <aside className="w-full shrink-0 lg:sticky lg:top-24 lg:w-80 lg:self-start">
+      <div
+        className={`mx-auto flex max-w-[1600px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 ${
+          isDashboard && !sidebarVisible ? 'lg:flex-col' : 'lg:flex-row'
+        }`}
+      >
+        <aside
+          className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-out lg:sticky lg:top-24 lg:w-80 lg:self-start ${
+            isDashboard && !sidebarVisible
+              ? 'pointer-events-none max-h-0 opacity-0 lg:max-h-0 lg:w-0 lg:opacity-0'
+              : 'max-h-[2000px] opacity-100'
+          }`}
+          aria-hidden={isDashboard && !sidebarVisible}
+        >
           <div className="surface-card p-4">
             <div className="snapshot-card">
               <div className="flex items-start justify-between gap-4">
@@ -149,7 +179,10 @@ export function AppShell({
           </div>
         </aside>
 
-        <main key={activeView} className="page-enter min-w-0 flex-1">
+        <main
+          key={activeView}
+          className={`page-enter min-w-0 flex-1 ${isDashboard ? 'dashboard-main' : ''}`}
+        >
           {children}
         </main>
       </div>
