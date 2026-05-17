@@ -21,6 +21,59 @@ const ZOOM_MAX = 1.25
 const ZOOM_STEP = 0.1
 const ZOOM_DEFAULT = 0.78
 
+const ZONE_STYLES = {
+  admission: {
+    fill: 'rgba(37, 99, 235, 0.28)',
+    stroke: '#60a5fa',
+    headerFill: '#1d4ed8',
+    stepFill: '#3b82f6',
+    titleClass: 'fill-white',
+    subClass: 'fill-blue-100',
+  },
+  prep: {
+    fill: 'rgba(13, 148, 136, 0.24)',
+    stroke: '#2dd4bf',
+    headerFill: '#0f766e',
+    stepFill: '#14b8a6',
+    titleClass: 'fill-white',
+    subClass: 'fill-teal-100',
+  },
+  major: {
+    fill: 'rgba(146, 64, 14, 0.32)',
+    stroke: '#fbbf24',
+    headerFill: '#b45309',
+    stepFill: '#f59e0b',
+    titleClass: 'fill-white',
+    subClass: 'fill-amber-100',
+  },
+}
+
+const TRACK_STYLES = {
+  admission: {
+    locked: { fill: 'rgba(30, 58, 138, 0.75)', stroke: '#60a5fa' },
+    unlocked: { fill: 'rgba(59, 130, 246, 0.45)', stroke: '#93c5fd' },
+    complete: { fill: 'rgba(37, 99, 235, 0.5)', stroke: '#bfdbfe' },
+  },
+  prep: {
+    locked: { fill: 'rgba(15, 60, 55, 0.8)', stroke: '#2dd4bf' },
+    unlocked: { fill: 'rgba(20, 120, 110, 0.5)', stroke: '#5eead4' },
+    complete: { fill: 'rgba(13, 148, 136, 0.45)', stroke: '#99f6e4' },
+  },
+  major: {
+    locked: { fill: 'rgba(69, 45, 10, 0.75)', stroke: '#fbbf24' },
+    unlocked: { fill: 'rgba(180, 120, 20, 0.5)', stroke: '#fde047' },
+    complete: { fill: 'rgba(146, 64, 14, 0.55)', stroke: '#fcd34d' },
+  },
+}
+
+const TRACK_BADGE = {
+  admission: { label: 'Step 1', fill: '#1d4ed8', stroke: '#93c5fd' },
+  prep: { label: 'Step 2', fill: '#0f766e', stroke: '#5eead4' },
+  major: { label: 'Step 3', fill: '#b45309', stroke: '#fde047' },
+}
+
+const MAJOR_DIVIDER_X = 638
+
 function readStoredIds() {
   if (typeof window === 'undefined') {
     return null
@@ -116,37 +169,67 @@ export function EconPrepMapFlowchart({ showBackLink = true }) {
   }
 
   function courseStroke(node) {
-    const phase = node.phase ?? 'premajor'
-    const isPrepCenter = node.column === 'center' && phase === 'premajor'
-    const isUpper = phase === 'upper'
+    const track = node.track ?? (node.phase === 'upper' ? 'major' : 'prep')
+    const palette = TRACK_STYLES[track] ?? TRACK_STYLES.prep
 
     if (isCompleteCourse(node)) {
-      if (isUpper) {
-        return { fill: 'rgba(120, 53, 15, 0.35)', stroke: '#fcd34d' }
-      }
-      if (isPrepCenter) {
-        return { fill: 'rgba(56, 189, 248, 0.35)', stroke: '#7dd3fc' }
-      }
-      return { fill: 'rgba(6, 78, 59, 0.45)', stroke: '#34d399' }
+      return palette.complete
     }
-
     if (isUnlockedCourse(node)) {
-      if (isUpper) {
-        return { fill: 'rgba(180, 120, 20, 0.4)', stroke: '#fde047' }
-      }
-      if (isPrepCenter) {
-        return { fill: 'rgba(96, 165, 250, 0.55)', stroke: '#bae6fd' }
-      }
-      return { fill: 'rgba(30, 58, 138, 0.35)', stroke: '#7dd3fc' }
+      return palette.unlocked
     }
+    return palette.locked
+  }
 
-    if (isUpper) {
-      return { fill: 'rgba(69, 45, 10, 0.55)', stroke: 'rgba(253, 224, 71, 0.45)' }
-    }
-    if (isPrepCenter) {
-      return { fill: 'rgba(59, 130, 196, 0.42)', stroke: 'rgba(147, 197, 253, 0.65)' }
-    }
-    return { fill: 'rgba(15, 23, 42, 0.85)', stroke: 'rgba(148, 163, 184, 0.45)' }
+  function renderZone(zone) {
+    const style = ZONE_STYLES[zone.track] ?? ZONE_STYLES.prep
+    const headerH = 56
+
+    return (
+      <g key={zone.id}>
+        <rect
+          x={zone.x}
+          y={zone.y}
+          width={zone.w}
+          height={zone.h}
+          rx={16}
+          fill={style.fill}
+          stroke={style.stroke}
+          strokeWidth={3}
+        />
+        <rect
+          x={zone.x}
+          y={zone.y}
+          width={zone.w}
+          height={headerH}
+          rx={16}
+          fill={style.headerFill}
+        />
+        <rect x={zone.x} y={zone.y + 44} width={zone.w} height={14} fill={style.headerFill} />
+        <rect
+          x={zone.x + 14}
+          y={zone.y + 12}
+          width={72}
+          height={22}
+          rx={6}
+          fill={style.stepFill}
+        />
+        <text
+          x={zone.x + 50}
+          y={zone.y + 28}
+          textAnchor="middle"
+          className="fill-white text-[11px] font-bold uppercase tracking-[0.12em]"
+        >
+          {zone.step}
+        </text>
+        <text x={zone.x + 96} y={zone.y + 26} className={`text-[15px] font-bold ${style.titleClass}`}>
+          {zone.label}
+        </text>
+        <text x={zone.x + 96} y={zone.y + 44} className={`text-[11px] ${style.subClass}`}>
+          {zone.sublabel}
+        </text>
+      </g>
+    )
   }
 
   function toggleNode(nodeId) {
@@ -180,20 +263,38 @@ export function EconPrepMapFlowchart({ showBackLink = true }) {
       )}
 
       <p className="text-sm leading-6 text-slate-400">
-        {ECON_MAJOR_SHEET_LABEL} Economics B.A. prep map. The <span className="text-sky-200">blue zone</span>{' '}
-        is pre-major and preparation; the <span className="text-gold">gold zone</span> is upper division. Use
-        zoom to fit your screen.
+        {ECON_MAJOR_SHEET_LABEL} Economics B.A. path. Steps 1–2 are{' '}
+        <strong className="font-semibold text-slate-200">before</strong> upper-division major credit; Step 3 is{' '}
+        <strong className="font-semibold text-amber-200">the major itself</strong> (40 UD units).
       </p>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="rounded-2xl border-2 border-blue-400/50 bg-blue-950/50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-300">
+            Steps 1–2 · Not UD major units
+          </p>
+          <p className="mt-1 text-sm text-slate-200">
+            Pre-major admission, then preparation — qualify and get ready to declare.
+          </p>
+        </div>
+        <div className="rounded-2xl border-2 border-amber-400/55 bg-amber-950/45 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-300">Step 3 · The major</p>
+          <p className="mt-1 text-sm text-slate-200">
+            Upper-division Economics after you are in the major.
+          </p>
+        </div>
+      </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-silver/30 bg-slate-950/40 px-3 py-2">
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-500/10 px-2 py-1">
-            <span className="h-2 w-2 rounded-sm bg-sky-400/60" />
-            Pre-major &amp; prep
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-blue-400/40 bg-blue-500/15 px-2 py-1 text-blue-200">
+            Step 1 · Admission
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-gold/30 bg-gold/10 px-2 py-1">
-            <span className="h-2 w-2 rounded-sm bg-gold/60" />
-            Upper division
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-teal-400/40 bg-teal-500/15 px-2 py-1 text-teal-200">
+            Step 2 · Prep
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-500/15 px-2 py-1 text-amber-200">
+            Step 3 · Major
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -239,50 +340,46 @@ export function EconPrepMapFlowchart({ showBackLink = true }) {
             ))}
           </defs>
 
-          {zones.map((zone) => (
-            <g key={zone.id}>
-              <rect
-                x={zone.x}
-                y={zone.y}
-                width={zone.w}
-                height={zone.h}
-                rx={18}
-                fill={
-                  zone.id === 'premajor'
-                    ? 'rgba(30, 58, 95, 0.42)'
-                    : 'rgba(69, 45, 10, 0.28)'
-                }
-                stroke={
-                  zone.id === 'premajor'
-                    ? 'rgba(125, 211, 252, 0.35)'
-                    : 'rgba(254, 188, 17, 0.4)'
-                }
-                strokeWidth={2}
-              />
-              <text
-                x={zone.x + 18}
-                y={zone.y + 26}
-                className={`text-[12px] font-bold uppercase tracking-[0.14em] ${
-                  zone.id === 'premajor' ? 'fill-sky-200' : 'fill-gold'
-                }`}
-              >
-                {zone.label}
-              </text>
-              <text x={zone.x + 18} y={zone.y + 44} className="fill-slate-400 text-[11px]">
-                {zone.sublabel}
-              </text>
-            </g>
-          ))}
+          {zones.map(renderZone)}
 
           <line
-            x1={640}
-            y1={24}
-            x2={640}
-            y2={height - 24}
-            stroke="rgba(203, 213, 225, 0.2)"
+            x1={20}
+            y1={210}
+            x2={628}
+            y2={210}
+            stroke="#2dd4bf"
             strokeWidth={2}
-            strokeDasharray="6 6"
+            strokeDasharray="10 6"
+            strokeOpacity={0.55}
           />
+          <text x={24} y={206} className="fill-teal-200/90 text-[10px] font-semibold uppercase tracking-[0.1em]">
+            Then preparation →
+          </text>
+
+          <line
+            x1={MAJOR_DIVIDER_X}
+            y1={8}
+            x2={MAJOR_DIVIDER_X}
+            y2={height - 8}
+            stroke="rgba(251, 191, 36, 0.25)"
+            strokeWidth={14}
+          />
+          <line
+            x1={MAJOR_DIVIDER_X}
+            y1={8}
+            x2={MAJOR_DIVIDER_X}
+            y2={height - 8}
+            stroke="#fbbf24"
+            strokeWidth={4}
+          />
+          <text
+            x={MAJOR_DIVIDER_X + 10}
+            y={height / 2}
+            className="fill-amber-200 text-[11px] font-bold uppercase tracking-[0.12em]"
+            transform={`rotate(-90 ${MAJOR_DIVIDER_X + 10} ${height / 2})`}
+          >
+            Declare major →
+          </text>
 
           {edges.map((edge) => {
             const fromNode = flowById[edge.from]
@@ -337,6 +434,8 @@ export function EconPrepMapFlowchart({ showBackLink = true }) {
             const missing = courseNode ? missingLabels(node) : []
             const interactive = courseNode && (unlocked || complete)
             const { fill, stroke } = courseStroke(node)
+            const track = node.track ?? (node.phase === 'upper' ? 'major' : 'prep')
+            const badge = TRACK_BADGE[track]
             const title = !unlocked && missing.length ? `Locked — needs: ${missing.join(', ')}` : node.label
 
             return (
@@ -354,8 +453,30 @@ export function EconPrepMapFlowchart({ showBackLink = true }) {
                   rx={node.id === 'udElectives' ? 16 : 14}
                   fill={fill}
                   stroke={stroke}
-                  strokeWidth="2"
+                  strokeWidth={track === 'major' ? 2.5 : 2}
                 />
+                {badge && (
+                  <>
+                    <rect
+                      x={node.x + node.w - 62}
+                      y={node.y + 8}
+                      width={54}
+                      height={18}
+                      rx={5}
+                      fill={badge.fill}
+                      stroke={badge.stroke}
+                      strokeWidth={1}
+                    />
+                    <text
+                      x={node.x + node.w - 35}
+                      y={node.y + 21}
+                      textAnchor="middle"
+                      className="fill-white text-[9px] font-bold uppercase tracking-[0.08em]"
+                    >
+                      {badge.label}
+                    </text>
+                  </>
+                )}
                 <text
                   x={node.x + 16}
                   y={node.y + 32}
