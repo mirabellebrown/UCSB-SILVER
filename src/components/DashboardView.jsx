@@ -192,18 +192,14 @@ export function DashboardView({ checklistSections, onNavigate, planner }) {
         </div>
       </section>
 
-      <p className="text-center text-xs font-medium uppercase tracking-[0.2em] text-gold/70">
-        Scroll down to explore · sidebar appears as you go
-      </p>
-
       <section id="dashboard-destinations">
         <p className="text-label-caps-gold">Get started</p>
         <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
           What do you need help with?
         </h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-          Pick an area below to plan your four years, check GEs and major requirements, browse resources,
-          ask questions, or review Winter deadlines.
+          Pick an area below to plan your four years, check GEs and major requirements, open the Economics
+          prep flowchart, browse resources, ask questions, or review Winter deadlines.
         </p>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

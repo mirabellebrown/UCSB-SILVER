@@ -44,6 +44,7 @@ import { GeEasyPicks } from './components/GeEasyPicks'
 import { ResourcesView } from './components/ResourcesView'
 import { ImportantLinksPanel } from './components/ImportantLinksPanel'
 import { DashboardView } from './components/DashboardView'
+import { EconPrepMapFlowchart } from './components/EconPrepMapFlowchart'
 import { ProgressRing } from './components/ProgressRing'
 import { parseGePlaceholderCode, resolveGeAreaKey } from './lib/gePlaceholder'
 import { useGeEasyPicks } from './lib/useGeEasyPicks'
@@ -109,6 +110,16 @@ function plannerMatchesRequirement(item, plannedCourseCodes) {
 
 function App() {
   const [activeView, setActiveView] = useState('dashboard')
+  const [sidebarRevealed, setSidebarRevealed] = useState(false)
+
+  function handleNavigate(viewId) {
+    if (viewId === 'dashboard') {
+      setSidebarRevealed(false)
+    } else {
+      setSidebarRevealed(true)
+    }
+    setActiveView(viewId)
+  }
   const [planner, setPlanner] = useState(() => {
     const storedPlanner = readStoredValue(storageKeys.planner, legacyStorageKeys.planner)
     return Array.isArray(storedPlanner) ? storedPlanner : createPlannerState()
@@ -315,7 +326,7 @@ function App() {
   }
 
   function handleAskInChat(prompt) {
-    setActiveView('chat')
+    handleNavigate('chat')
     setDraftMessage(prompt)
   }
 
@@ -336,7 +347,7 @@ function App() {
 
   const activeContent = {
     dashboard: (
-      <DashboardView checklistSections={checklistSections} onNavigate={setActiveView} planner={planner} />
+      <DashboardView checklistSections={checklistSections} onNavigate={handleNavigate} planner={planner} />
     ),
     planner: (
       <PlannerView
@@ -348,6 +359,19 @@ function App() {
         plannedCourseCodes={plannedCourseCodes}
         satisfiedCourseCodes={satisfiedCourseCodes}
       />
+    ),
+    flowchart: (
+      <div className="space-y-6">
+        <section className="panel border border-white/10 bg-white/6 p-6 backdrop-blur-xl">
+          <p className="text-label-caps-gold">Economics pathway</p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight">Prep flowchart</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+            Tap courses when you have completed prerequisites. Progress saves in this browser only—verify
+            every rule in Gaucho GOLD and the UCSB General Catalog.
+          </p>
+        </section>
+        <EconPrepMapFlowchart showBackLink={false} />
+      </div>
     ),
     checklist: (
       <ChecklistView
@@ -366,7 +390,7 @@ function App() {
     ),
     resources: (
       <ResourcesView
-        onNavigate={setActiveView}
+        onNavigate={handleNavigate}
         onAskAboutSnippet={handleAskAboutSnippet}
         onAskInChat={handleAskInChat}
       />
@@ -376,20 +400,21 @@ function App() {
         draftMessage={draftMessage}
         messages={chatMessages}
         onDraftChange={setDraftMessage}
-        onNavigate={setActiveView}
+        onNavigate={handleNavigate}
         onOpenCourseGrades={handleOpenCourseGrades}
         onSelectPrompt={handleChatPrompt}
         onSendMessage={handleSendMessage}
         promptSuggestions={chatPromptSuggestions}
       />
     ),
-    dates: <DatesView onNavigateResources={() => setActiveView('resources')} />,
+    dates: <DatesView onNavigateResources={() => handleNavigate('resources')} />,
   }[activeView]
 
   const navDescriptions = {
     dashboard: 'Your profile and shortcuts to every SILVER area',
     planner: 'Click-to-add roadmap across four years',
     checklist: 'Track requirements and transfer credit',
+    flowchart: 'Interactive ECON prerequisite map for this demo',
     resources: 'FAQ, useful links, and policy snippets',
     chat: 'General UCSB questions with official source links',
     dates: 'Winter 2026 deadlines and official links',
@@ -401,7 +426,8 @@ function App() {
         studentProfile={studentProfile}
         navItems={navItems}
         activeView={activeView}
-        onNavigate={setActiveView}
+        onNavigate={handleNavigate}
+        sidebarRevealed={sidebarRevealed}
         renderNavDescription={(id) => navDescriptions[id] ?? ''}
       >
         {activeContent}

@@ -56,6 +56,24 @@ export function AppIcon({ name, className = 'h-5 w-5' }) {
         strokeWidth="1.8"
       />
     ),
+    flowchart: (
+      <>
+        <path
+          d="M6 6h5v4H6zM13 6h5v4h-5zM6 14h5v4H6zM13 14h5v4h-5z"
+          fill="none"
+          stroke="currentColor"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+        />
+        <path
+          d="M11 8h2M8 14h2v2M14 10v2M16 14h-2"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeWidth="1.8"
+        />
+      </>
+    ),
     bell: (
       <path
         d="M12 4a4 4 0 0 1 4 4v2.6c0 .7.2 1.4.6 2l1.1 1.7c.5.8-.1 1.7-1 1.7H7.3c-.9 0-1.5-.9-1-1.7l1.1-1.7c.4-.6.6-1.3.6-2V8a4 4 0 0 1 4-4Zm-1.5 14h3"

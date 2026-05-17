@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { GoldLink } from './GoldLink'
 import { AppIcon } from './AppIcon'
 import { ReminderPanel } from './ReminderPanel'
@@ -21,31 +21,15 @@ export function AppShell({
   navItems,
   activeView,
   onNavigate,
+  sidebarRevealed,
   children,
   renderNavDescription,
 }) {
   const [remindersOpen, setRemindersOpen] = useState(false)
-  const [sidebarVisible, setSidebarVisible] = useState(activeView !== 'dashboard')
   const timelineEvents = useMemo(() => getTimelineEvents(), [])
   const upcomingCount = useMemo(() => countUpcomingEvents(timelineEvents), [timelineEvents])
   const isDashboard = activeView === 'dashboard'
-
-  useEffect(() => {
-    if (!isDashboard) {
-      setSidebarVisible(true)
-      return undefined
-    }
-
-    setSidebarVisible(false)
-
-    const revealSidebar = () => {
-      setSidebarVisible(window.scrollY > 300)
-    }
-
-    revealSidebar()
-    window.addEventListener('scroll', revealSidebar, { passive: true })
-    return () => window.removeEventListener('scroll', revealSidebar)
-  }, [isDashboard])
+  const showSidebar = !isDashboard || sidebarRevealed
 
   return (
     <div className="app-page-bg relative min-h-screen overflow-hidden text-slate-50">
@@ -102,16 +86,16 @@ export function AppShell({
 
       <div
         className={`mx-auto flex max-w-[1600px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 ${
-          isDashboard && !sidebarVisible ? 'lg:flex-col' : 'lg:flex-row'
+          showSidebar ? 'lg:flex-row' : 'lg:flex-col'
         }`}
       >
         <aside
           className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-out lg:sticky lg:top-24 lg:w-80 lg:self-start ${
-            isDashboard && !sidebarVisible
-              ? 'pointer-events-none max-h-0 opacity-0 lg:max-h-0 lg:w-0 lg:opacity-0'
-              : 'max-h-[2000px] opacity-100'
+            showSidebar
+              ? 'max-h-[2000px] opacity-100'
+              : 'pointer-events-none max-h-0 opacity-0 lg:max-h-0 lg:w-0 lg:opacity-0'
           }`}
-          aria-hidden={isDashboard && !sidebarVisible}
+          aria-hidden={!showSidebar}
         >
           <div className="surface-card p-4">
             <div className="snapshot-card">
