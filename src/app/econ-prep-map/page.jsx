@@ -12,7 +12,7 @@ export default function EconPrepMapPage() {
     <div className="app-page-bg relative min-h-screen text-slate-50">
       <div className="app-page-overlay pointer-events-none fixed inset-0" />
 
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-logo-navy shadow-[0_8px_32px_rgba(20,52,116,0.35)]">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-silver/35 bg-logo-navy shadow-[0_8px_32px_rgba(20,52,116,0.35)]">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-8">
           <div>
             <SilverLogo height={40} href="/" />

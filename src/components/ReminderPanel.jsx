@@ -56,11 +56,11 @@ export function ReminderPanel({ events, onClose, onOpenDates }) {
       <button
         type="button"
         aria-label="Close reminders"
-        className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-app-bg/70 backdrop-blur-sm"
         onClick={onClose}
       />
-      <aside className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-white/10 bg-slate-950 shadow-[-20px_0_80px_rgba(2,8,23,0.5)]">
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+      <aside className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-silver/30 bg-app-bg shadow-[-20px_0_80px_rgba(3,30,59,0.65)]">
+        <div className="flex items-center justify-between border-b border-silver/30 px-5 py-4">
           <div>
             <p className="text-label-caps">Reminders</p>
             <h2 className="text-xl font-semibold tracking-tight">Deadlines & pass times</h2>
@@ -68,15 +68,15 @@ export function ReminderPanel({ events, onClose, onOpenDates }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-2xl border border-white/10 px-3 py-1.5 text-sm text-slate-300 hover:border-white/20 hover:text-white"
+            className="rounded-2xl border border-silver/30 px-3 py-1.5 text-sm text-slate-300 hover:border-silver/40 hover:text-white"
           >
             Close
           </button>
         </div>
 
-        <div className="border-b border-white/10 px-5 py-4">
+        <div className="border-b border-silver/30 px-5 py-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Notification preferences</p>
-          <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+          <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-silver/30 bg-white/[0.06] px-3 py-3">
             <span className="text-sm text-slate-200">Email reminders (demo)</span>
             <input
               type="checkbox"
@@ -85,7 +85,7 @@ export function ReminderPanel({ events, onClose, onOpenDates }) {
               className="h-4 w-4 accent-silver"
             />
           </label>
-          <label className="mt-2 flex cursor-not-allowed items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 opacity-60">
+          <label className="mt-2 flex cursor-not-allowed items-center justify-between gap-3 rounded-2xl border border-silver/30 bg-white/[0.06] px-3 py-3 opacity-60">
             <span className="text-sm text-slate-400">
               Push notifications <span className="text-slate-500">(coming soon)</span>
             </span>
@@ -105,7 +105,7 @@ export function ReminderPanel({ events, onClose, onOpenDates }) {
               return (
                 <li
                   key={event.date + event.title}
-                  className="rounded-2xl border border-white/10 bg-slate-900/60 p-3"
+                  className="rounded-2xl border border-silver/30 bg-white/[0.06] p-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -141,7 +141,7 @@ export function ReminderPanel({ events, onClose, onOpenDates }) {
           </ul>
         </div>
 
-        <div className="border-t border-white/10 px-5 py-4">
+        <div className="border-t border-silver/30 px-5 py-4">
           <button
             type="button"
             onClick={() => {

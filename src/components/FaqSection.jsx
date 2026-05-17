@@ -11,7 +11,7 @@ import {
 
 function FaqItem({ item, isOpen, onToggle, onAskInChat }) {
   return (
-    <article className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50">
+    <article className="overflow-hidden rounded-2xl border border-silver/30 bg-white/[0.06]">
       <button
         type="button"
         onClick={onToggle}
@@ -23,7 +23,7 @@ function FaqItem({ item, isOpen, onToggle, onAskInChat }) {
           className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition ${
             isOpen
               ? 'border-gold/40 bg-gold/14 text-gold'
-              : 'border-white/15 bg-white/5 text-slate-400'
+              : 'border-silver/35 bg-white/[0.06] text-slate-400'
           }`}
         >
           <AppIcon
@@ -33,7 +33,7 @@ function FaqItem({ item, isOpen, onToggle, onAskInChat }) {
         </span>
       </button>
       {isOpen && (
-        <div className="border-t border-white/10 px-5 pb-5 pt-4">
+        <div className="border-t border-silver/30 px-5 pb-5 pt-4">
           <p className="text-sm leading-6 text-slate-300">{item.answer}</p>
           {(item.links?.length > 0 || item.chatPrompt) && (
             <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -64,7 +64,7 @@ export function FaqSection({ onAskInChat }) {
   const filtered = useMemo(() => filterFaqByCategory(category), [category])
 
   return (
-    <section className="panel border border-white/10 bg-white/6 p-6 backdrop-blur-xl">
+    <section className="panel border border-silver/30 bg-white/[0.06] p-6 backdrop-blur-xl">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-label-caps">Frequently asked questions</p>
@@ -85,7 +85,7 @@ export function FaqSection({ onAskInChat }) {
                 className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition ${
                   isActive
                     ? 'border-silver/35 bg-silver/15 text-silver-bright'
-                    : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white'
+                    : 'border-silver/30 bg-white/[0.06] text-slate-400 hover:border-silver/40 hover:text-white'
                 }`}
               >
                 {cat.label}

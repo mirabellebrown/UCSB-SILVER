@@ -9,7 +9,7 @@ export function ProgressRing({ percent, size = 'lg' }) {
         background: `conic-gradient(var(--color-silver) 0deg ${percent * 3.6}deg, rgba(255,255,255,0.08) ${percent * 3.6}deg 360deg)`,
       }}
     >
-      <div className={`flex ${inner} items-center justify-center rounded-full bg-slate-950 font-semibold`}>
+      <div className={`flex ${inner} items-center justify-center rounded-full bg-app-bg font-semibold`}>
         {percent}%
       </div>
     </div>

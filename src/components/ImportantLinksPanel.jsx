@@ -27,7 +27,7 @@ export function ImportantLinksPanel({ onNavigateResources, compact = false }) {
 
   return (
     <section
-      className={`panel border border-gold/20 bg-gradient-to-br from-gold/10 via-ucsb-navy/90 to-slate-950 ${
+      className={`panel border border-silver/30 bg-gradient-to-br from-gold/10 via-ucsb-navy/90 to-app-bg ${
         compact ? 'p-5' : 'p-6'
       }`}
     >
@@ -49,7 +49,7 @@ export function ImportantLinksPanel({ onNavigateResources, compact = false }) {
               className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition ${
                 isActive
                   ? 'border-gold/40 bg-gold/14 text-gold'
-                  : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white'
+                  : 'border-silver/30 bg-white/[0.06] text-slate-400 hover:border-silver/40 hover:text-white'
               }`}
             >
               {filter.label}
@@ -73,7 +73,7 @@ export function ImportantLinksPanel({ onNavigateResources, compact = false }) {
         ))}
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
+      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-silver/30 pt-4">
         <GoldLink variant="pill">Open Gaucho GOLD</GoldLink>
         {onNavigateResources && (
           <button

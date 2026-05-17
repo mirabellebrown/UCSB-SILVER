@@ -9,7 +9,7 @@ import { countUpcomingEvents, getTimelineEvents } from '../lib/academicDates'
 
 function InfoTile({ label, value }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/6 p-3">
+    <div className="rounded-2xl border border-silver/30 bg-white/[0.06] p-3">
       <div className="text-xs uppercase tracking-[0.16em] text-slate-400">{label}</div>
       <div className="mt-2 font-medium text-white">{value}</div>
     </div>
@@ -35,7 +35,7 @@ export function AppShell({
     <div className="app-page-bg relative min-h-screen text-slate-50">
       <div className="app-page-overlay pointer-events-none fixed inset-0" />
 
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-logo-navy shadow-[0_8px_32px_rgba(20,52,116,0.35)]">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-silver/30 bg-logo-navy shadow-[0_8px_32px_rgba(3,30,59,0.55)]">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <SilverLogo height={36} priority className="sm:!max-h-10" />
@@ -43,7 +43,7 @@ export function AppShell({
           </div>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300">
+            <div className="rounded-2xl border border-silver/30 bg-white/[0.06] px-4 py-2 text-sm text-slate-300">
               Winter 2026 planning snapshot for {studentProfile.firstName}
             </div>
             <GoldLink variant="pill">Open Gaucho GOLD</GoldLink>
@@ -54,7 +54,7 @@ export function AppShell({
               type="button"
               aria-label="Open deadline reminders"
               onClick={() => setRemindersOpen(true)}
-              className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-silver/40 hover:text-silver"
+              className="relative flex h-11 w-11 items-center justify-center rounded-full border border-silver/30 bg-white/[0.06] text-slate-200 transition hover:border-silver/40 hover:text-silver"
             >
               <AppIcon name="bell" className="h-5 w-5" />
               {upcomingCount > 0 && (
@@ -63,7 +63,7 @@ export function AppShell({
                 </span>
               )}
             </button>
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-2 py-2">
+            <div className="flex items-center gap-3 rounded-2xl border border-silver/30 bg-white/[0.06] px-2 py-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ucsb-navy text-sm font-semibold text-silver">
                 {studentProfile.initials}
               </div>
@@ -140,7 +140,7 @@ export function AppShell({
                     className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition ${
                       isActive
                         ? 'nav-active'
-                        : 'border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/8 hover:text-white'
+                        : 'border-silver/30 bg-white/[0.06] text-slate-300 hover:border-silver/40 hover:bg-white/[0.08] hover:text-white'
                     }`}
                   >
                     <span
