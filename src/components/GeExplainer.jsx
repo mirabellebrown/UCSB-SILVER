@@ -28,6 +28,14 @@ export function GeExplainer() {
             General Education (catalog)
           </GoldLink>
           <GoldLink href="https://my.sa.ucsb.edu/gold/">Open degree audit in GOLD</GoldLink>
+          <a
+            href="https://dailynexus.com/interactives/grades/ges"
+            target="_blank"
+            rel="noreferrer"
+            className="link-gold rounded-full px-3 py-1.5 text-xs font-semibold"
+          >
+            Daily Nexus GE grades
+          </a>
         </div>
       </div>
     </details>
