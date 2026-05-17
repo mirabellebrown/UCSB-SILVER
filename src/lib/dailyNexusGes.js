@@ -4,23 +4,14 @@ import { unstable_cache } from 'next/cache'
 import { parse } from 'csv-parse/sync'
 
 import { getGradesIndex } from './dailyNexusGrades'
-import { DAILY_NEXUS_GE_URL } from './gePlaceholder'
+import { DAILY_NEXUS_GE_URL, getGeCsvColumnMap } from './gePlaceholder'
 
 const GES_CSV_URL = 'https://raw.githubusercontent.com/dailynexusdata/grades-data/main/ges.csv'
 const CACHE_REVALIDATE_SECONDS = 60 * 60 * 24
 const MIN_LETTER_STUDENTS = 30
 const TOP_N = 5
 
-/** SILVER area key → column in Daily Nexus ges.csv */
-const GE_AREA_COLUMN_MAP = {
-  A2: 'Writing',
-  B: 'Area B',
-  C: 'Area C',
-  D: 'Area D',
-  E: 'Area E',
-  F: 'Area F',
-  G: 'Area G',
-}
+const GE_AREA_COLUMN_MAP = getGeCsvColumnMap()
 
 function normalizeCourseCode(courseCode) {
   return courseCode?.trim().replace(/\s+/g, ' ').toUpperCase() ?? ''

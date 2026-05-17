@@ -150,7 +150,7 @@ export function ReminderPanel({ events, onClose, onOpenDates }) {
             }}
             className="w-full rounded-2xl border border-silver/25 bg-silver/10 px-4 py-2.5 text-sm font-semibold text-silver-bright hover:bg-silver/15"
           >
-            Open full calendar
+            View all dates & links
           </button>
         </div>
       </aside>

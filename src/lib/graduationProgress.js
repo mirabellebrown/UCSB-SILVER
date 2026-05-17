@@ -1,3 +1,5 @@
+import { resolveGeAreaKey } from './gePlaceholder'
+
 const DEGREE_UNIT_TARGET = 180
 
 /**
@@ -20,21 +22,13 @@ export function buildGraduationSummary({ studentProfile, checklistSections }) {
   const whatsLeft = allItems
     .filter((item) => !item.isSatisfied)
     .map((item) => {
-      const geFromCode = item.courseCodes
-        ?.map((code) => {
-          const match = code.trim().match(/^GE\s+(A2|[A-G])$/i)
-          return match ? match[1].toUpperCase() : null
-        })
-        .find(Boolean)
-      const geFromLabel = item.label?.match(/Area\s+(A2|[A-G])\b/i)?.[1]?.toUpperCase() ?? null
-
       return {
         id: item.id,
         sectionTitle: item.sectionTitle,
         label: item.label,
         detail: item.detail,
         isPlanned: item.isPlanned,
-        geAreaKey: geFromCode ?? geFromLabel ?? null,
+        geAreaKey: resolveGeAreaKey(item),
       }
     })
     .slice(0, 8)

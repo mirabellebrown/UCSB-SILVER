@@ -8,12 +8,10 @@ import { GoldLink, GoldSourceChip } from './components/GoldLink'
 import {
   advisorSuggestedCourses,
   chatbotSeedMessages,
-  dashboardMetrics,
   navItems,
   plannerLegend,
   plannerSuggestions,
   plannerTemplate,
-  quickAccessCards,
   requirementSections,
   studentProfile,
 } from './mockData'
@@ -28,7 +26,6 @@ import {
   inferPriority,
 } from './lib/academicDates'
 import { useCourseGradeSummaries } from './lib/useCourseGradeSummaries'
-import { buildGraduationSummary } from './lib/graduationProgress'
 import {
   buildPrerequisiteChatReply,
   checkPrerequisitesMet,
@@ -46,6 +43,8 @@ import { GeExplainer } from './components/GeExplainer'
 import { GeEasyPicks } from './components/GeEasyPicks'
 import { ResourcesView } from './components/ResourcesView'
 import { ImportantLinksPanel } from './components/ImportantLinksPanel'
+import { DashboardView } from './components/DashboardView'
+import { ProgressRing } from './components/ProgressRing'
 import { parseGePlaceholderCode, resolveGeAreaKey } from './lib/gePlaceholder'
 import { useGeEasyPicks } from './lib/useGeEasyPicks'
 import { politicalScienceMinorPreview } from './data/politicalScienceMinorPreview'
@@ -75,22 +74,6 @@ function createPlannerState() {
       ]),
     ),
   }))
-}
-
-function getMonthMatrix(year, monthIndex) {
-  const firstWeekday = new Date(year, monthIndex, 1).getDay()
-  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
-  const cells = Array.from({ length: firstWeekday }, () => null)
-
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    cells.push(day)
-  }
-
-  while (cells.length % 7 !== 0) {
-    cells.push(null)
-  }
-
-  return cells
 }
 
 function readStoredValue(key, legacyKey) {
@@ -353,12 +336,7 @@ function App() {
 
   const activeContent = {
     dashboard: (
-      <DashboardView
-        checklistSections={checklistSections}
-        onNavigate={setActiveView}
-        onOpenCourseGrades={handleOpenCourseGrades}
-        planner={planner}
-      />
+      <DashboardView checklistSections={checklistSections} onNavigate={setActiveView} planner={planner} />
     ),
     planner: (
       <PlannerView
@@ -409,12 +387,12 @@ function App() {
   }[activeView]
 
   const navDescriptions = {
-    dashboard: 'Overview, progress, and action cards',
+    dashboard: 'Your profile and shortcuts to every SILVER area',
     planner: 'Click-to-add roadmap across four years',
     checklist: 'Track requirements and transfer credit',
     resources: 'FAQ, useful links, and policy snippets',
     chat: 'General UCSB questions with official source links',
-    dates: 'Winter 2026 deadlines, calendar, and official links',
+    dates: 'Winter 2026 deadlines and official links',
   }
 
   return (
@@ -436,237 +414,6 @@ function App() {
     </>
   )
 }
-
-function DashboardView({ checklistSections, onNavigate, onOpenCourseGrades, planner }) {
-  const totalPlannedUnits = planner
-    .flatMap((yearPlan) => quarters.flatMap((quarter) => yearPlan.quarters[quarter]))
-    .reduce((sum, course) => sum + course.units, 0)
-
-  const graduation = buildGraduationSummary({ studentProfile, checklistSections })
-
-  const openGeAreaKeys = useMemo(
-    () =>
-      [
-        ...new Set(
-          graduation.whatsLeft.map((item) => item.geAreaKey).filter(Boolean),
-        ),
-      ],
-    [graduation.whatsLeft],
-  )
-
-  const {
-    error: gePicksError,
-    isLoading: gePicksLoading,
-    picksByArea: gePicksByArea,
-  } = useGeEasyPicks(openGeAreaKeys)
-
-  return (
-    <div className="space-y-6">
-      <section className="panel-hero border border-gold/20 bg-gradient-to-br from-ucsb-navy via-[#0b2442] to-slate-950 p-6 shadow-[0_20px_90px_rgba(2,8,23,0.35)]">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-            <ProgressRing percent={graduation.checklistPercent} />
-            <div>
-              <p className="text-label-caps">Graduation progress</p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-                {graduation.onTrack ? 'On track' : 'Needs attention'} for {graduation.expectedGraduation}
-              </h2>
-              <p className="mt-2 text-sm text-slate-400">
-                Demo record for {studentProfile.firstName} · verify in Gaucho GOLD before enrolling
-              </p>
-              <div className="mt-4 flex flex-wrap gap-4 text-sm">
-                <div>
-                  <span className="text-slate-400">Units completed</span>
-                  <div className="font-semibold text-white">
-                    {graduation.unitsCompleted} / {graduation.unitsTarget}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-400">Units remaining</span>
-                  <div className="font-semibold text-white">{graduation.unitsRemaining}</div>
-                </div>
-                <div>
-                  <span className="text-slate-400">Planned in roadmap</span>
-                  <div className="font-semibold text-white">{totalPlannedUnits} units</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {graduation.riskFlags.length > 0 && (
-            <div className="w-full max-w-md space-y-2 lg:max-w-sm">
-              {graduation.riskFlags.map((flag) => (
-                <div
-                  key={flag.message}
-                  className={`rounded-2xl border px-3 py-2 text-sm leading-6 ${
-                    flag.severity === 'warn'
-                      ? 'border-amber-400/30 bg-amber-400/10 text-amber-100'
-                      : 'border-silver/25 bg-silver/8 text-slate-200'
-                  }`}
-                >
-                  {flag.message}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-[1.2fr,1fr]">
-        <div className="panel border border-white/10 bg-white/6 p-6 backdrop-blur-xl">
-          <p className="text-label-caps">What&apos;s left</p>
-          <h3 className="mt-2 text-xl font-semibold tracking-tight">Requirements still open</h3>
-          <p className="mt-1 text-sm text-slate-400">
-            {graduation.checklistPercent}% of checklist items satisfied in this demo path.
-          </p>
-          <ul className="mt-4 divide-y divide-white/10">
-            {graduation.whatsLeft.map((item) => (
-              <li key={item.id} className="py-3 text-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-white">{item.label}</div>
-                    <div className="text-slate-400">{item.detail}</div>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-2xl px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
-                      item.isPlanned ? 'badge-silver' : 'border border-white/15 bg-white/5 text-slate-400'
-                    }`}
-                  >
-                    {item.isPlanned ? 'In planner' : 'Open'}
-                  </span>
-                </div>
-                {item.geAreaKey && (
-                  <GeEasyPicks
-                    areaKey={item.geAreaKey}
-                    picks={gePicksByArea[item.geAreaKey] ?? []}
-                    isLoading={gePicksLoading}
-                    error={gePicksError}
-                    compact
-                    onOpenCourseGrades={onOpenCourseGrades}
-                  />
-                )}
-              </li>
-            ))}
-          </ul>
-          <button
-            type="button"
-            onClick={() => onNavigate('checklist')}
-            className="mt-4 text-sm font-medium text-silver hover:text-silver-bright"
-          >
-            Open degree checklist →
-          </button>
-        </div>
-
-        <div className="panel border border-white/10 bg-white/6 p-6 backdrop-blur-xl">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-label-caps">Next up</p>
-              <h3 className="mt-2 text-xl font-semibold tracking-tight">Winter 2026</h3>
-            </div>
-            <AppIcon name="calendar" className="h-6 w-6 text-silver" />
-          </div>
-
-          <div className="mt-4 space-y-3">
-            {getUpcomingEvents(getTimelineEvents(), { limit: 3 }).map((event) => {
-              const priority = inferPriority(event)
-              const until = daysUntil(event)
-              return (
-                <div
-                  key={event.date + event.title}
-                  className="rounded-2xl border border-white/10 bg-slate-950/45 p-3"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="rounded-2xl bg-white/8 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200">
-                      {formatEventShortDate(event)}
-                      {until >= 0 && (
-                        <span className="text-slate-500">
-                          {' '}
-                          · {until === 0 ? 'today' : `${until}d`}
-                        </span>
-                      )}
-                    </span>
-                    <span
-                      className={`rounded-2xl px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
-                        priority === 'urgent'
-                          ? 'bg-rose-500/18 text-rose-200'
-                          : priority === 'upcoming'
-                            ? 'badge-silver-strong'
-                            : 'bg-sky-500/15 text-sky-200'
-                      }`}
-                    >
-                      {priority}
-                    </span>
-                  </div>
-                  <h4 className="mt-2 text-sm font-semibold">{event.title}</h4>
-                  <p className="mt-1 text-xs leading-5 text-slate-400">{event.detail}</p>
-                  {event.category === 'registration' && (
-                    <div className="mt-2">
-                      <GoldLink variant="pill">Open enrollment in GOLD</GoldLink>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-          <button
-            type="button"
-            onClick={() => onNavigate('dates')}
-            className="mt-4 text-sm font-medium text-silver hover:text-silver-bright"
-          >
-            Full calendar →
-          </button>
-        </div>
-      </section>
-
-      <section className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
-        {dashboardMetrics.map((metric) => (
-          <MetricCard key={metric.label} metric={metric} />
-        ))}
-      </section>
-
-      <section className="space-y-3">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-label-caps">Quick access</p>
-            <h3 className="mt-1 text-xl font-semibold tracking-tight">Tools</h3>
-          </div>
-        </div>
-
-        <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-4">
-          {quickAccessCards.map((card) => {
-            const shellClass = `group panel border border-white/10 bg-gradient-to-br ${card.accent} from-10% to-90% p-[1px] text-left transition hover:-translate-y-0.5`
-            const inner = (
-              <div className="h-full bg-slate-950/85 p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h4 className="text-base font-semibold tracking-tight">{card.title}</h4>
-                    <p className="mt-2 text-sm leading-6 text-slate-400">{card.description}</p>
-                  </div>
-                  <span className="rounded-2xl border border-white/10 bg-white/5 p-2 text-slate-200 transition group-hover:border-silver/25 group-hover:text-silver">
-                    <AppIcon name="arrow-up-right" className="h-4 w-4" />
-                  </span>
-                </div>
-              </div>
-            )
-            if (card.href) {
-              return (
-                <Link key={card.id} href={card.href} className={shellClass}>
-                  {inner}
-                </Link>
-              )
-            }
-            return (
-              <button key={card.id} type="button" onClick={() => onNavigate(card.id)} className={shellClass}>
-                {inner}
-              </button>
-            )
-          })}
-        </div>
-      </section>
-    </div>
-  )
-}
-
 
 function QuarterLoadBanner({ load, compact = false, className = '' }) {
   if (!load) {
@@ -737,7 +484,7 @@ function PlannerView({
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.6fr,0.9fr]">
-      <section className="space-y-6">
+      <section>
         <div className="panel border border-white/10 bg-white/6 p-6 backdrop-blur-xl">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -1936,12 +1683,6 @@ function DatesView({ onNavigateResources }) {
     [timelineEvents, categoryFilter],
   )
 
-  const calendarHighlights = {
-    0: new Set([2, 5, 8, 12, 16]),
-    1: new Set([2, 10, 13]),
-    2: new Set([6, 14]),
-  }
-
   return (
     <div className="grid gap-6 xl:grid-cols-[1.1fr,1fr]">
       <section className="panel border border-white/10 bg-white/6 p-6 backdrop-blur-xl">
@@ -2015,99 +1756,10 @@ function DatesView({ onNavigateResources }) {
         </div>
       </section>
 
-      <section className="space-y-6">
+      <section>
         <ImportantLinksPanel onNavigateResources={onNavigateResources} compact />
 
-        <div className="panel border border-silver/25 bg-gradient-to-br from-silver/14 via-ucsb-navy to-slate-950 p-6">
-          <p className="text-label-caps">Calendar view</p>
-          <h3 className="mt-2 text-2xl font-semibold tracking-tight">Quarter at a glance</h3>
-          <p className="mt-3 text-sm leading-6 text-slate-300">
-            Highlighted dates mark registration, billing timing on BARC, and major advising milestones across January through March.
-          </p>
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-1 2xl:grid-cols-3">
-          {[
-            { label: 'January 2026', monthIndex: 0 },
-            { label: 'February 2026', monthIndex: 1 },
-            { label: 'March 2026', monthIndex: 2 },
-          ].map((month) => (
-            <MonthCard
-              key={month.label}
-              label={month.label}
-              monthIndex={month.monthIndex}
-              highlightedDays={calendarHighlights[month.monthIndex]}
-            />
-          ))}
-        </div>
       </section>
-    </div>
-  )
-}
-
-function MonthCard({ label, monthIndex, highlightedDays }) {
-  const cells = getMonthMatrix(2026, monthIndex)
-
-  return (
-    <div className="panel border border-white/10 bg-white/6 p-5 backdrop-blur-xl">
-      <div className="text-lg font-semibold tracking-tight">{label}</div>
-      <div className="mt-4 grid grid-cols-7 gap-2 text-center text-xs uppercase tracking-[0.18em] text-slate-500">
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-          <div key={`${label}-${day}-${index}`}>{day}</div>
-        ))}
-      </div>
-      <div className="mt-3 grid grid-cols-7 gap-2">
-        {cells.map((day, index) => {
-          const isHighlighted = day && highlightedDays.has(day)
-          return (
-            <div
-              key={`${label}-${index}`}
-              className={`flex aspect-square items-center justify-center rounded-2xl text-sm ${
-                day
-                  ? isHighlighted
-                    ? 'bg-silver font-semibold text-ucsb-navy'
-                    : 'bg-slate-950/45 text-slate-200'
-                  : 'bg-transparent'
-              }`}
-            >
-              {day ?? ''}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function ProgressRing({ percent }) {
-  return (
-    <div
-      className="relative flex h-36 w-36 items-center justify-center rounded-full"
-      style={{
-        background: `conic-gradient(var(--color-silver) 0deg ${percent * 3.6}deg, rgba(255,255,255,0.08) ${percent * 3.6}deg 360deg)`,
-      }}
-    >
-      <div className="flex h-28 w-28 items-center justify-center rounded-full bg-slate-950 text-3xl font-semibold">
-        {percent}%
-      </div>
-    </div>
-  )
-}
-
-function MetricCard({ metric }) {
-  const toneStyles = {
-    sky: 'from-sky-500/16 to-sky-500/0 text-sky-100',
-    silver: 'from-silver/18 to-silver/0 text-slate-100',
-    emerald: 'from-emerald-500/16 to-emerald-500/0 text-emerald-100',
-    indigo: 'from-indigo-500/16 to-indigo-500/0 text-indigo-100',
-  }
-
-  return (
-    <div className={`panel border border-white/10 bg-gradient-to-br ${toneStyles[metric.tone]} p-[1px]`}>
-      <div className=" bg-slate-950/85 p-5">
-        <div className="text-sm text-slate-400">{metric.label}</div>
-        <div className="mt-3 text-3xl font-semibold tracking-tight text-white">{metric.value}</div>
-      </div>
     </div>
   )
 }

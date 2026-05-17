@@ -8,7 +8,8 @@ export function GeExplainer() {
       </summary>
       <div className="border-t border-silver/15 px-4 py-3 text-sm leading-6 text-slate-300">
         <p>
-          In Gaucho GOLD, each course is tagged with GE letters (Areas A–G, plus special codes). A single
+          In Gaucho GOLD, each course is tagged with GE letters (Areas A–G, plus special requirements like
+          NWC, American History, Ethnicity, and European Traditions). A single
           class can sometimes satisfy more than one requirement in your audit, but you only receive credit
           once per area toward graduation.
         </p>
