@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-const LOGO_ASPECT = 1024 / 576
+const LOGO_ASPECT = 1020 / 224
 
 /**
  * @param {{ height?: number, className?: string, priority?: boolean, href?: string | null }} props
@@ -12,7 +12,7 @@ export function SilverLogo({ height = 40, className = '', priority = false, href
   const image = (
     <Image
       src="/silver-logo.png"
-      alt="SILVER"
+      alt="UCSB SILVER"
       width={width}
       height={height}
       priority={priority}
