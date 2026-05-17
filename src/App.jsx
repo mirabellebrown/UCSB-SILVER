@@ -16,9 +16,17 @@ import {
   quickAccessCards,
   requirementSections,
   studentProfile,
-  upcomingDeadlines,
-  winterDates,
 } from './mockData'
+import {
+  DATE_CATEGORY_FILTERS,
+  daysUntil,
+  filterTimelineByCategory,
+  formatEventShortDate,
+  getCategoryChipClass,
+  getTimelineEvents,
+  getUpcomingEvents,
+  inferPriority,
+} from './lib/academicDates'
 import { useCourseGradeSummaries } from './lib/useCourseGradeSummaries'
 import { buildGraduationSummary } from './lib/graduationProgress'
 import {
@@ -623,38 +631,53 @@ function DashboardView({ checklistSections, onNavigate, planner }) {
         <div className="panel border border-white/10 bg-white/6 p-6 backdrop-blur-xl">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-label-caps">Upcoming deadlines</p>
+              <p className="text-label-caps">Next up</p>
               <h3 className="mt-2 text-xl font-semibold tracking-tight">Winter 2026</h3>
             </div>
             <AppIcon name="calendar" className="h-6 w-6 text-silver" />
           </div>
 
           <div className="mt-4 space-y-3">
-            {upcomingDeadlines.slice(0, 3).map((deadline) => (
-              <div
-                key={deadline.title}
-                className="rounded-sm border border-white/10 bg-slate-950/45 p-3"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="rounded-sm bg-white/8 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200">
-                    {deadline.date}
-                  </span>
-                  <span
-                    className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
-                      deadline.priority === 'urgent'
-                        ? 'bg-rose-500/18 text-rose-200'
-                        : deadline.priority === 'upcoming'
-                          ? 'badge-silver-strong'
-                          : 'bg-sky-500/15 text-sky-200'
-                    }`}
-                  >
-                    {deadline.priority}
-                  </span>
+            {getUpcomingEvents(getTimelineEvents(), { limit: 3 }).map((event) => {
+              const priority = inferPriority(event)
+              const until = daysUntil(event)
+              return (
+                <div
+                  key={event.date + event.title}
+                  className="rounded-sm border border-white/10 bg-slate-950/45 p-3"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="rounded-sm bg-white/8 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200">
+                      {formatEventShortDate(event)}
+                      {until >= 0 && (
+                        <span className="text-slate-500">
+                          {' '}
+                          · {until === 0 ? 'today' : `${until}d`}
+                        </span>
+                      )}
+                    </span>
+                    <span
+                      className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+                        priority === 'urgent'
+                          ? 'bg-rose-500/18 text-rose-200'
+                          : priority === 'upcoming'
+                            ? 'badge-silver-strong'
+                            : 'bg-sky-500/15 text-sky-200'
+                      }`}
+                    >
+                      {priority}
+                    </span>
+                  </div>
+                  <h4 className="mt-2 text-sm font-semibold">{event.title}</h4>
+                  <p className="mt-1 text-xs leading-5 text-slate-400">{event.detail}</p>
+                  {event.category === 'registration' && (
+                    <div className="mt-2">
+                      <GoldLink variant="pill">Open enrollment in GOLD</GoldLink>
+                    </div>
+                  )}
                 </div>
-                <h4 className="mt-2 text-sm font-semibold">{deadline.title}</h4>
-                <p className="mt-1 text-xs leading-5 text-slate-400">{deadline.description}</p>
-              </div>
-            ))}
+              )
+            })}
           </div>
           <button
             type="button"
@@ -1792,9 +1815,16 @@ function ChatView({ draftMessage, messages, onDraftChange, onOpenCourseGrades, o
 }
 
 function DatesView() {
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const timelineEvents = useMemo(() => getTimelineEvents(), [])
+  const filteredEvents = useMemo(
+    () => filterTimelineByCategory(timelineEvents, categoryFilter),
+    [timelineEvents, categoryFilter],
+  )
+
   const calendarHighlights = {
-    0: new Set([2, 5, 12, 16]),
-    1: new Set([2, 13]),
+    0: new Set([2, 5, 8, 12, 16]),
+    1: new Set([2, 10, 13]),
     2: new Set([6, 14]),
   }
 
@@ -1805,31 +1835,65 @@ function DatesView() {
         <h2 className="mt-2 text-3xl font-semibold tracking-tight">Winter 2026 timeline</h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
           Key academic and advising milestones for the Winter quarter, plus billing timing on BARC when relevant.
+          Registration events link to Gaucho GOLD.
         </p>
 
+        <div className="mt-5 flex flex-wrap gap-2">
+          {DATE_CATEGORY_FILTERS.map((filter) => {
+            const isActive = categoryFilter === filter.id
+            return (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => setCategoryFilter(filter.id)}
+                className={`rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition ${
+                  isActive
+                    ? 'border-silver/35 bg-silver/15 text-silver-bright'
+                    : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white'
+                }`}
+              >
+                {filter.label}
+              </button>
+            )
+          })}
+        </div>
+
         <div className="mt-6 space-y-4">
-          {winterDates.map((event) => (
+          {filteredEvents.map((event) => (
             <div key={event.date} className="relative rounded-sm border border-white/10 bg-slate-950/45 p-5">
               <div className="absolute left-6 top-5 h-[calc(100%-2.5rem)] w-px bg-white/10" />
               <div className="relative z-10 flex gap-4">
-                <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-sm bg-[#003660] text-center shadow-[0_10px_30px_rgba(0,54,96,0.35)]">
-                  <span className="text-[11px] uppercase tracking-[0.18em] text-silver">{event.month}</span>
+                <div
+                  className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-sm text-center shadow-[0_10px_30px_rgba(0,54,96,0.35)] ${
+                    event.category === 'registration'
+                      ? 'border border-gold/35 bg-gold/15'
+                      : 'bg-[#003660]'
+                  }`}
+                >
+                  <span
+                    className={`text-[11px] uppercase tracking-[0.18em] ${
+                      event.category === 'registration' ? 'text-gold' : 'text-silver'
+                    }`}
+                  >
+                    {event.month}
+                  </span>
                   <span className="text-lg font-semibold">{event.day}</span>
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-lg font-semibold tracking-tight">{event.title}</h3>
-                    <span className={`rounded-sm px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
-                      event.category === 'billing'
-                        ? 'bg-emerald-400/15 text-emerald-200'
-                        : event.category === 'major'
-                          ? 'badge-silver-strong'
-                          : 'bg-sky-500/15 text-sky-200'
-                    }`}>
+                    <span
+                      className={`rounded-sm px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${getCategoryChipClass(event.category)}`}
+                    >
                       {event.category}
                     </span>
                   </div>
                   <p className="mt-2 text-sm leading-6 text-slate-400">{event.detail}</p>
+                  {event.category === 'registration' && (
+                    <div className="mt-3">
+                      <GoldLink variant="pill">Open enrollment in GOLD</GoldLink>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
