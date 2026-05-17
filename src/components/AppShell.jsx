@@ -35,11 +35,11 @@ export function AppShell({
     <div className="app-page-bg relative min-h-screen text-slate-50">
       <div className="app-page-overlay pointer-events-none fixed inset-0" />
 
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-logo-navy shadow-[0_8px_32px_rgba(20,52,116,0.35)]">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <SilverLogo height={36} priority className="sm:!max-h-10" />
-            <p className="hidden text-sm text-slate-400 sm:block">Planning alongside Gaucho GOLD</p>
+            <p className="hidden text-sm text-slate-300 sm:block">Planning alongside Gaucho GOLD</p>
           </div>
 
           <div className="hidden items-center gap-3 lg:flex">

@@ -25,7 +25,7 @@ export default function EconPrepMapPage() {
  </div>
  </header>
 
- <main className="relative z-10 mx-auto max-w-[1600px] px-4 py-8 sm:px-8">
+ <main className="relative z-10 mx-auto max-w-[1600px] px-4 pb-8 pt-[11rem] sm:px-8">
  <EconPrepMapFlowchart showBackLink />
  </main>
  </div>
