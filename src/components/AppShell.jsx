@@ -32,10 +32,10 @@ export function AppShell({
   const showSidebar = !isDashboard || sidebarRevealed
 
   return (
-    <div className="app-page-bg relative min-h-screen overflow-hidden text-slate-50">
-      <div className="app-page-overlay pointer-events-none absolute inset-0" />
+    <div className="app-page-bg relative min-h-screen text-slate-50">
+      <div className="app-page-overlay pointer-events-none fixed inset-0" />
 
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <SilverLogo height={36} priority className="sm:!max-h-10" />
@@ -85,12 +85,12 @@ export function AppShell({
       )}
 
       <div
-        className={`mx-auto flex max-w-[1600px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 ${
+        className={`relative mx-auto flex max-w-[1600px] flex-col gap-6 px-4 pb-6 pt-[4.75rem] sm:px-6 lg:px-8 ${
           showSidebar ? 'lg:flex-row' : 'lg:flex-col'
         }`}
       >
         <aside
-          className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-out lg:sticky lg:top-24 lg:w-80 lg:self-start ${
+          className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-out lg:sticky lg:top-[4.75rem] lg:w-80 lg:self-start ${
             showSidebar
               ? 'max-h-[2000px] opacity-100'
               : 'pointer-events-none max-h-0 opacity-0 lg:max-h-0 lg:w-0 lg:opacity-0'
