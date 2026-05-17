@@ -1,27 +1,47 @@
 import { GoldLink } from './GoldLink'
+import { LS_GE_AREAS, LS_GE_SPECIAL_REQUIREMENTS } from '../data/lsGeRequirements'
 
 export function GeExplainer() {
   return (
-    <details className="mt-4 border border-silver/20 bg-silver/5 open:bg-silver/8">
+    <details className="mt-4 rounded-2xl border border-silver/30 bg-white/[0.05] open:bg-white/[0.07]">
       <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-slate-100 [&::-webkit-details-marker]:hidden">
-        <span className="text-silver">+</span> How GOLD assigns GE credit
+        <span className="text-silver">+</span> How L&S general education works
       </summary>
-      <div className="border-t border-silver/15 px-4 py-3 text-sm leading-6 text-slate-300">
+      <div className="border-t border-silver/25 px-4 py-3 text-sm leading-6 text-slate-300">
         <p>
-          In Gaucho GOLD, each course is tagged with GE letters (Areas A–G, plus special requirements like
-          NWC, American History, Ethnicity, and European Traditions). A single
-          class can sometimes satisfy more than one requirement in your audit, but you only receive credit
-          once per area toward graduation.
+          B.A. candidates in the College of Letters and Science complete Areas A–G plus special subject area
+          requirements. GOLD shows how each course applies — one class can count toward an area and a special
+          requirement, but credit is awarded once per requirement.
         </p>
-        <ul className="mt-3 list-disc space-y-2 pl-5">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-silver">Areas A–G</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-400">
+              {LS_GE_AREAS.map((area) => (
+                <li key={area.key}>
+                  {area.label}: {area.title}
+                  {area.coursesRequired > 1 ? ` (${area.coursesRequired} courses)` : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-silver">Special requirements</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-400">
+              {LS_GE_SPECIAL_REQUIREMENTS.map((special) => (
+                <li key={special.key}>
+                  {special.title}
+                  {special.coursesRequired > 1 ? ` (${special.coursesRequired} courses)` : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <ul className="mt-4 list-disc space-y-2 pl-5">
           <li>Your degree audit is the source of truth — not this demo checklist.</li>
           <li>
-            Double majors and minors can make GE look “full” while individual areas still show open until
-            GOLD reconciles overlapping courses.
-          </li>
-          <li>
-            Transfer and AP credit may clear an area with a different label than you expect; confirm in GOLD
-            before you skip a planned GE course.
+            Transfer and AP credit may clear requirements with different labels than you expect; confirm in GOLD
+            before you skip a planned course.
           </li>
         </ul>
         <div className="mt-4 flex flex-wrap gap-2">

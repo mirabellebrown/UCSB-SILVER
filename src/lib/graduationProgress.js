@@ -35,7 +35,9 @@ export function buildGraduationSummary({ studentProfile, checklistSections }) {
 
   const riskFlags = []
 
-  const geIncomplete = allItems.filter((item) => item.sectionId === 'ge' && !item.isSatisfied)
+  const geIncomplete = allItems.filter(
+    (item) => (item.sectionId === 'ge' || item.sectionId === 'ge-special') && !item.isSatisfied,
+  )
   if (geIncomplete.length > 0) {
     riskFlags.push({
       severity: 'info',

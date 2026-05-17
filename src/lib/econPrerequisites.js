@@ -1,7 +1,7 @@
 import { econPrepMapNodes } from '../mockData'
 import { econPrepMapById } from './econPrepFlowchartUtils'
 
-/** Course code → prerequisite course codes (demo L&S Economics path). */
+/** Course code → prerequisite course codes (demo L&S Economics B.A. path). */
 const COURSE_PREREQUISITES = Object.fromEntries(
   econPrepMapNodes.map((node) => [
     node.label,
@@ -11,16 +11,16 @@ const COURSE_PREREQUISITES = Object.fromEntries(
   ]),
 )
 
-// Upper-division courses in the planner that are not on the prep flowchart nodes.
+// Upper-division courses in the planner that extend the prep flowchart.
 Object.assign(COURSE_PREREQUISITES, {
-  'ECON 101': ['ECON 10A', 'PSTAT 109'],
-  'ECON 134A': ['ECON 10A', 'PSTAT 109'],
-  'ECON 140A': ['ECON 10A', 'ECON 10B'],
+  'ECON 100B': ['ECON 2', 'ECON 10A'],
+  'ECON 101': ['ECON 10A', 'MATH 3B'],
+  'ECON 134A': ['ECON 10A', 'ECON 101'],
+  'ECON 140A': ['ECON 10A', 'ECON 101'],
   'ECON 140B': ['ECON 140A'],
-  'ECON 171': ['ECON 101', 'PSTAT 109'],
-  'ECON 115': ['ECON 10A'],
+  'ECON 171': ['ECON 101'],
+  'ECON 115': ['ECON 10A', 'ECON 101'],
   'ECON 134B': ['ECON 134A'],
-  'PSTAT 120A': ['MATH 3B'],
 })
 
 export function getPrerequisiteCodes(courseCode) {
@@ -41,7 +41,7 @@ export function checkPrerequisitesMet(courseCode, satisfiedCodes) {
   }
 }
 
-const COURSE_CODE_PATTERN = /\b(econ|pstat|math)\s*\d+[a-z]?\b/gi
+const COURSE_CODE_PATTERN = /\b(econ|math)\s*\d+[a-z]?\b/gi
 
 export function extractCourseCodesFromText(text) {
   const matches = text.match(COURSE_CODE_PATTERN) ?? []

@@ -1,85 +1,53 @@
-/** @typedef {{ csvColumn: string, label: string, placeholderCode: string, labelPatterns: RegExp[] }} GeAreaDefinition */
+/** @typedef {{ csvColumn: string, label: string, placeholderCode: string, labelPatterns: RegExp[], coursesRequired?: number }} GeAreaDefinition */
+
+import { LS_GE_AREAS, LS_GE_SPECIAL_REQUIREMENTS } from '../data/lsGeRequirements'
 
 export const DAILY_NEXUS_GE_URL = 'https://dailynexus.com/interactives/grades/ges'
 
-/**
- * Standard Areas A–G plus UCSB special graduation requirements (Nexus ges.csv columns).
- * @type {Record<string, GeAreaDefinition>}
- */
-export const GE_AREA_DEFINITIONS = {
-  A2: {
-    csvColumn: 'Writing',
-    label: 'Area A2 (Writing)',
-    placeholderCode: 'GE A2',
-    labelPatterns: [/Area\s+A2\b/i],
-  },
-  B: {
-    csvColumn: 'Area B',
-    label: 'Area B',
-    placeholderCode: 'GE B',
-    labelPatterns: [/Area\s+B\b/i],
-  },
-  C: {
-    csvColumn: 'Area C',
-    label: 'Area C',
-    placeholderCode: 'GE C',
-    labelPatterns: [/Area\s+C\b/i],
-  },
-  D: {
-    csvColumn: 'Area D',
-    label: 'Area D',
-    placeholderCode: 'GE D',
-    labelPatterns: [/Area\s+D\b/i],
-  },
-  E: {
-    csvColumn: 'Area E',
-    label: 'Area E',
-    placeholderCode: 'GE E',
-    labelPatterns: [/Area\s+E\b/i],
-  },
-  F: {
-    csvColumn: 'Area F',
-    label: 'Area F',
-    placeholderCode: 'GE F',
-    labelPatterns: [/Area\s+F\b/i],
-  },
-  G: {
-    csvColumn: 'Area G',
-    label: 'Area G',
-    placeholderCode: 'GE G',
-    labelPatterns: [/Area\s+G\b/i],
-  },
-  NWC: {
-    csvColumn: 'World Cult',
-    label: 'Non-Western Cultures (NWC)',
-    placeholderCode: 'GE NWC',
-    labelPatterns: [/non-western/i, /\bNWC\b/i, /world cult/i],
-  },
-  AHI: {
-    csvColumn: 'AHI',
-    label: 'American History & Institutions',
-    placeholderCode: 'GE AHI',
-    labelPatterns: [/american history/i, /\bAHI\b/i],
-  },
-  ETHNICITY: {
-    csvColumn: 'Ethnicity',
-    label: 'American Ethnicity',
-    placeholderCode: 'GE ETH',
-    labelPatterns: [/american ethnic/i, /\bethnicity\b/i],
-  },
-  EURO: {
-    csvColumn: 'Euro Trad',
-    label: 'European Traditions',
-    placeholderCode: 'GE EURO',
-    labelPatterns: [/european tradition/i, /\beuro trad\b/i, /european\b/i],
-  },
-  QUANT: {
-    csvColumn: 'Quant Relationships',
-    label: 'Quantitative Relationships',
-    placeholderCode: 'GE QUANT',
-    labelPatterns: [/quantitative relationship/i, /\bquant\b/i],
-  },
+/** Nexus ges.csv column per area key (Area A uses Writing column). */
+const CSV_COLUMN_BY_KEY = {
+  A: 'Writing',
+  B: 'Area B',
+  C: 'Area C',
+  D: 'Area D',
+  E: 'Area E',
+  F: 'Area F',
+  G: 'Area G',
+  NWC: 'World Cult',
+  ETHNICITY: 'Ethnicity',
+  EURO: 'Euro Trad',
+  QUANT: 'Quant Relationships',
+  WRITING: 'Writing',
 }
+
+function buildDefinition(entry, isSpecial) {
+  const key = entry.key
+  const catalogLabel = isSpecial
+    ? entry.title
+    : `${entry.label}: ${entry.title}`
+
+  return {
+    csvColumn: CSV_COLUMN_BY_KEY[key],
+    label: catalogLabel,
+    placeholderCode: entry.placeholderCode,
+    coursesRequired: entry.coursesRequired,
+    labelPatterns: isSpecial
+      ? [
+          new RegExp(entry.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
+          new RegExp(`\\b${entry.key}\\b`, 'i'),
+        ]
+      : [
+          new RegExp(`${entry.label}[:\\s]`, 'i'),
+          new RegExp(`Area\\s+${key}\\b`, 'i'),
+        ],
+  }
+}
+
+/** @type {Record<string, GeAreaDefinition>} */
+export const GE_AREA_DEFINITIONS = Object.fromEntries([
+  ...LS_GE_AREAS.map((area) => [area.key, buildDefinition(area, false)]),
+  ...LS_GE_SPECIAL_REQUIREMENTS.map((special) => [special.key, buildDefinition(special, true)]),
+])
 
 /** @type {Record<string, string>} */
 export const GE_AREA_LABELS = Object.fromEntries(
@@ -134,7 +102,7 @@ export function parseGeAreaFromLabel(label) {
     return null
   }
 
-  const areaMatch = label.match(/Area\s+(A2|[A-G])\b/i)
+  const areaMatch = label.match(/Area\s+([A-G])\b/i)
   if (areaMatch) {
     return areaMatch[1].toUpperCase()
   }
@@ -170,6 +138,8 @@ export function resolveGeAreaKey(item) {
 /** SILVER area key → Daily Nexus ges.csv column name */
 export function getGeCsvColumnMap() {
   return Object.fromEntries(
-    Object.entries(GE_AREA_DEFINITIONS).map(([key, def]) => [key, def.csvColumn]),
+    Object.entries(GE_AREA_DEFINITIONS)
+      .filter(([, def]) => def.csvColumn)
+      .map(([key, def]) => [key, def.csvColumn]),
   )
 }
