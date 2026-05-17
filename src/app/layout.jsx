@@ -6,7 +6,8 @@ export const metadata = {
   description:
     'UCSB SILVER is a clickable UCSB Letters & Science planning prototype for course planning, degree progress, important dates, and Campus Q&A with official sources—designed to work alongside Gaucho GOLD.',
   icons: {
-    icon: '/favicon.svg',
+    icon: [{ url: '/favicon-32.png', sizes: '32x32', type: 'image/png' }],
+    apple: '/apple-touch-icon.png',
   },
 }
 

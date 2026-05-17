@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { GoldLink } from './GoldLink'
 import { AppIcon } from './AppIcon'
 import { ReminderPanel } from './ReminderPanel'
+import { SilverLogo } from './SilverLogo'
 import { countUpcomingEvents, getTimelineEvents } from '../lib/academicDates'
 
 function InfoTile({ label, value }) {
@@ -33,14 +34,9 @@ export function AppShell({
 
       <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-200 to-slate-50 text-lg font-black text-ucsb-navy shadow-[0_0_30px_var(--silver-glow)]">
-              Ag
-            </div>
-            <div>
-              <div className="text-lg font-semibold tracking-tight">UCSB SILVER</div>
-              <div className="text-sm text-slate-400">Planning alongside Gaucho GOLD</div>
-            </div>
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <SilverLogo height={36} priority className="sm:!max-h-10" />
+            <p className="hidden text-sm text-slate-400 sm:block">Planning alongside Gaucho GOLD</p>
           </div>
 
           <div className="hidden items-center gap-3 lg:flex">
