@@ -45,6 +45,7 @@ import {
 import { GeExplainer } from './components/GeExplainer'
 import { GeEasyPicks } from './components/GeEasyPicks'
 import { ResourcesView } from './components/ResourcesView'
+import { ImportantLinksPanel } from './components/ImportantLinksPanel'
 import { parseGePlaceholderCode, resolveGeAreaKey } from './lib/gePlaceholder'
 import { useGeEasyPicks } from './lib/useGeEasyPicks'
 import { politicalScienceMinorPreview } from './data/politicalScienceMinorPreview'
@@ -404,7 +405,7 @@ function App() {
         promptSuggestions={chatPromptSuggestions}
       />
     ),
-    dates: <DatesView />,
+    dates: <DatesView onNavigateResources={() => setActiveView('resources')} />,
   }[activeView]
 
   const navDescriptions = {
@@ -413,7 +414,7 @@ function App() {
     checklist: 'Track requirements and transfer credit',
     resources: 'FAQ, useful links, and policy snippets',
     chat: 'General UCSB questions with official source links',
-    dates: 'Winter 2026 deadlines and calendar',
+    dates: 'Winter 2026 deadlines, calendar, and official links',
   }
 
   return (
@@ -1927,7 +1928,7 @@ function ChatView({
   )
 }
 
-function DatesView() {
+function DatesView({ onNavigateResources }) {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const timelineEvents = useMemo(() => getTimelineEvents(), [])
   const filteredEvents = useMemo(
@@ -1944,11 +1945,11 @@ function DatesView() {
   return (
     <div className="grid gap-6 xl:grid-cols-[1.1fr,1fr]">
       <section className="panel border border-white/10 bg-white/6 p-6 backdrop-blur-xl">
-        <p className="text-label-caps">Important Dates</p>
+        <p className="text-label-caps">Important dates</p>
         <h2 className="mt-2 text-3xl font-semibold tracking-tight">Winter 2026 timeline</h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
           Key academic and advising milestones for the Winter quarter, plus billing timing on BARC when relevant.
-          Registration events link to Gaucho GOLD.
+          Registration events link to Gaucho GOLD. Official bookmarks are on the right.
         </p>
 
         <div className="mt-5 flex flex-wrap gap-2">
@@ -2015,6 +2016,8 @@ function DatesView() {
       </section>
 
       <section className="space-y-6">
+        <ImportantLinksPanel onNavigateResources={onNavigateResources} compact />
+
         <div className="panel border border-silver/25 bg-gradient-to-br from-silver/14 via-ucsb-navy to-slate-950 p-6">
           <p className="text-label-caps">Calendar view</p>
           <h3 className="mt-2 text-2xl font-semibold tracking-tight">Quarter at a glance</h3>
@@ -2081,7 +2084,7 @@ function ProgressRing({ percent }) {
     <div
       className="relative flex h-36 w-36 items-center justify-center rounded-full"
       style={{
-        background: `conic-gradient(var(--color-gold) 0deg ${percent * 0.72}deg, var(--color-silver) ${percent * 0.72}deg ${percent * 3.6}deg, rgba(255,255,255,0.08) ${percent * 3.6}deg 360deg)`,
+        background: `conic-gradient(var(--color-silver) 0deg ${percent * 3.6}deg, rgba(255,255,255,0.08) ${percent * 3.6}deg 360deg)`,
       }}
     >
       <div className="flex h-28 w-28 items-center justify-center rounded-full bg-slate-950 text-3xl font-semibold">

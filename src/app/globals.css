@@ -175,9 +175,9 @@ input {
 .progress-silver {
   background: linear-gradient(
     to right,
-    var(--color-gold),
     var(--color-silver),
-    var(--color-silver-bright)
+    var(--color-silver-bright),
+    #e2e8f0
   );
 }
 

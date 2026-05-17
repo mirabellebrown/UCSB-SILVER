@@ -1,42 +1,7 @@
 'use client'
 
-import Link from 'next/link'
 import { usefulLinkGroups } from '../data/faqAndLinks'
-import { GoldSourceChip } from './GoldLink'
-
-function UsefulLinkRow({ link }) {
-  const isInternal = link.url.startsWith('/')
-
-  return (
-    <li className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-slate-950/45 p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        {isInternal ? (
-          <Link
-            href={link.url}
-            className="text-sm font-semibold text-gold hover:text-gold-hover"
-          >
-            {link.label}
-          </Link>
-        ) : (
-          <a
-            href={link.url}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-semibold text-gold hover:text-gold-hover"
-          >
-            {link.label}
-          </a>
-        )}
-        {link.description && (
-          <p className="mt-1 text-xs leading-5 text-slate-400">{link.description}</p>
-        )}
-      </div>
-      {!isInternal && (
-        <GoldSourceChip href={link.url} label="Open source" />
-      )}
-    </li>
-  )
-}
+import { CampusLinkRow } from './CampusLinkRow'
 
 export function UsefulLinksSection() {
   return (
@@ -55,7 +20,7 @@ export function UsefulLinksSection() {
             <p className="mt-1 text-sm text-slate-400">{group.description}</p>
             <ul className="mt-4 space-y-3">
               {group.links.map((link) => (
-                <UsefulLinkRow key={link.url + link.label} link={link} />
+                <CampusLinkRow key={link.url + link.label} link={link} />
               ))}
             </ul>
           </div>

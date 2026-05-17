@@ -4,7 +4,7 @@ export const navItems = [
   { id: 'checklist', label: 'Degree Checklist', shortLabel: 'Checklist', icon: 'checklist' },
   { id: 'resources', label: 'Resource Hub', shortLabel: 'Resources', icon: 'resources' },
   { id: 'chat', label: 'Campus Q&A', shortLabel: 'Q&A', icon: 'chat' },
-  { id: 'dates', label: 'Important Dates', shortLabel: 'Dates', icon: 'calendar' },
+  { id: 'dates', label: 'Dates & Links', shortLabel: 'Dates', icon: 'calendar' },
 ]
 
 export const studentProfile = {
@@ -61,8 +61,8 @@ export const quickAccessCards = [
   },
   {
     id: 'dates',
-    title: 'Review Winter deadlines',
-    description: 'See add and drop dates, declaration windows, and the quarter calendar.',
+    title: 'Review Winter deadlines & links',
+    description: 'See add and drop dates, the quarter calendar, and official UCSB bookmarks.',
     accent: 'from-emerald-400/20 to-emerald-300/0',
   },
 ]
