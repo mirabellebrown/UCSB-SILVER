@@ -8,11 +8,13 @@
   --color-gold-hover: #ffd457;
   --color-gold-muted: #fff1bd;
   --color-ucsb-navy: #003660;
+  --color-logo-navy: #143474;
+  --color-logo-white: #eff4fc;
 }
 
 :root {
   color: #f8fafc;
-  background-color: #020816;
+  background-color: var(--color-logo-white);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     sans-serif;
@@ -21,7 +23,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --surface-base: #020816;
+  --surface-base: var(--color-logo-white);
   --surface-elevated: rgba(255, 255, 255, 0.06);
   --border-subtle: rgba(255, 255, 255, 0.1);
   --silver-glow: rgba(203, 213, 225, 0.35);
@@ -58,17 +60,14 @@ input {
 }
 
 .app-page-bg {
-  background:
-    radial-gradient(circle at 12% 0%, rgba(254, 188, 17, 0.1), transparent 24%),
-    radial-gradient(circle at top, rgba(148, 163, 184, 0.14), transparent 30%),
-    linear-gradient(180deg, #04101d 0%, #07192f 42%, #020816 100%);
+  background-color: var(--color-logo-white);
 }
 
 .app-page-overlay {
   background:
-    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1), transparent 18%),
-    radial-gradient(circle at 85% 5%, rgba(254, 188, 17, 0.08), transparent 22%),
-    radial-gradient(circle at 80% 0%, rgba(148, 163, 184, 0.08), transparent 20%);
+    radial-gradient(circle at 18% 8%, rgba(203, 213, 225, 0.55), transparent 42%),
+    radial-gradient(circle at 88% 4%, rgba(254, 188, 17, 0.08), transparent 28%),
+    radial-gradient(circle at 50% 100%, rgba(241, 245, 249, 0.9), transparent 55%);
 }
 
 .dashboard-main {
