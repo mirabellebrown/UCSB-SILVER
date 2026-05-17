@@ -39,7 +39,7 @@ export function AppShell({
         <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <SilverLogo height={36} priority className="sm:!max-h-10" />
-            <p className="hidden text-sm text-slate-300 sm:block">Planning alongside Gaucho GOLD</p>
+            <p className="hidden text-sm text-slate-300 sm:block">One stop shop when GOLD won&apos;t cut it</p>
           </div>
 
           <div className="hidden items-center gap-3 lg:flex">
