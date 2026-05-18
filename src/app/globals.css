@@ -84,6 +84,22 @@ input {
   background: rgba(255, 255, 255, 0.07);
 }
 
+/** Light translucent silver — dashboard cards over app bg */
+.surface-frost {
+  border: 1px solid color-mix(in srgb, var(--color-silver) 28%, transparent);
+  background: color-mix(in srgb, var(--color-silver-bright) 9%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.surface-frost-strong {
+  border: 1px solid color-mix(in srgb, var(--color-silver) 34%, transparent);
+  background: color-mix(in srgb, var(--color-silver-bright) 13%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-silver) 8%, transparent),
+    0 16px 48px rgba(1, 8, 16, 0.35);
+}
+
 .dashboard-main {
   position: relative;
 }
