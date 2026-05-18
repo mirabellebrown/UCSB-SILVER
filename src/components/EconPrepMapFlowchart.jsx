@@ -19,7 +19,7 @@ const LEGACY_STORAGE_KEY = 'prereqly-econ-map'
 const ZOOM_MIN = 0.4
 const ZOOM_MAX = 1.45
 const ZOOM_STEP = 0.08
-const ZOOM_DEFAULT = 0.58
+const ZOOM_DEFAULT = 1
 
 /** Step 1 = gold, Step 2 = silver, Step 3 = bronze */
 const ZONE_STYLES = {
